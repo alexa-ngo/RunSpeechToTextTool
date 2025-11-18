@@ -35,5 +35,5 @@ transcription 	string Transcribed data from the media file
 _____________________________________________________
 
 ## UML Sequence Diagram
-[Speech-To-Text.drawio](../../Downloads/Speech-To-Text.drawio)
+
 ![alt text](img.png)
