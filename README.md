@@ -18,6 +18,8 @@ Example Request (cURL):
 
 curl -X POST "http://localhost:8001/api/transcribe" -H "Accept: application/json"
 
+Seen on the Server side:
+![alt text](POST-api-transcribe.png)
 ___________________________________________________
 
 ## How to RECEIVE DATA
@@ -28,10 +30,11 @@ Expected Successful JSON Response (HTTP 200):
 
 ____________________________________________________
 
-## Required Response Format
+## Required RESPONSE Format
 
- Field 	Type 	Description
-transcription 	string Transcribed data from the media file
+| Field |  Type  |	 Description  |
+|_______|________|________________|
+transcription| 	string | Transcribed data from the media file
 _____________________________________________________
 
 ## UML Sequence Diagram
