@@ -19,6 +19,7 @@ Example Request (cURL):
 curl -X POST "http://localhost:8001/api/transcribe" -H "Accept: application/json"
 
 Seen on the Server side:
+
 ![alt text](POST-api-transcribe.png)
 ___________________________________________________
 
@@ -34,7 +35,7 @@ ____________________________________________________
 
 | Field |  Type  |	 Description  |
 |_______|________|________________|
-transcription| 	string | Transcribed data from the media file
+| transcription | string | Transcribed data from the media file |
 _____________________________________________________
 
 ## UML Sequence Diagram
