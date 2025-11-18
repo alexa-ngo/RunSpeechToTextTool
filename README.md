@@ -33,9 +33,10 @@ ____________________________________________________
 
 ## Required RESPONSE Format
 
-| Field |  Type  |	 Description  |
-|_______|________|________________|
-| transcription | string | Transcribed data from the media file |
+|      Field     |   Type   |             Description               |
+| -------------- | -------- | ------------------------------------- |
+| transcription  |  String  | Transcribed data from the media file  |
+
 _____________________________________________________
 
 ## UML Sequence Diagram
