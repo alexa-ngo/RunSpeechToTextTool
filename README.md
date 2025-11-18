@@ -5,10 +5,15 @@ ________________________________________________
 
 ## How to REQUEST Data
 
-Since this program is not requesting data, rather, it is posting data using 
+Since this program is not requesting data, rather, it is posting data using
+
 HTTP Method: POST
+
 URL: http://localhost:8001/api/transcribe
+
 Required Header: Accept:application/json
 
+
 Example Request (cURL):
+
 curl -X POST "http://localhost:8001/api/transcribe" -H "Accept: application/json"
