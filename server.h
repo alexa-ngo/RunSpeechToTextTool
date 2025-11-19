@@ -1,7 +1,9 @@
 #ifndef SERVER
 #define SERVER
 
-// This is the declaration of the server.
+/*
+    This is the declaration of the server.
+*/
 
 #include <stdbool.h>
 #include <stdio.h>

@@ -41,4 +41,4 @@ _____________________________________________________
 
 ## UML Sequence Diagram
 
-![alt text](img.png)
+![alt text](UMLsequenceDiagram.png)
