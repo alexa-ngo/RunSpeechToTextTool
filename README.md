@@ -1,6 +1,10 @@
 # Run Speech To Text Tool
 
-This is a microservice to execute the Speech to Text Tool. Once this communication contract is published, it must not change so other services can rely on it 
+This is a microservice to execute the Speech to Text Tool. Once this communication contract is published, it must not change so other services can rely on it.
+
+This microservice uses the Multipart Form Data Parser written by Brian Khuu in C: 
+https://github.com/mofosyne/minimal-multipart-form-data-parser-c
+
 ________________________________________________
 
 ## How to REQUEST Data
