@@ -252,24 +252,36 @@ int main(int argc, char* argv[]) {
 				char json_filename_str[100];
 				char* left_brace = "{";
 				char* right_brace = "}";
-				strcat(json_filename_str, left_brace);
 				strcat(json_filename_str, final_filename);
-				strcat(json_filename_str, right_brace);
-				int json_filename_str_len = strlen(json_filename_str);
-				char* file_str_len = num_2_key_str(json_filename_str_len);
-				printf("file_str_len >> %s\n", file_str_len);
+
+				//printf("file_str_len >> %s\n", file_str_len);
 
 				// Build the official filename string
-				char http_OK_filename_str_official[10000];
-				char* two_slash_n = "\n\n";
+				char http_OK_filename_str_official[100000];
+				char* file_label = "\"filename\" : ";
+				char* null_char = "\0";
+				char* quote = "\"";
+				char* two_slash_n = "\n\n"
+;
+				char data_content_bytes[100];
+
+				strcat(data_content_bytes, left_brace);
+				strcat(data_content_bytes, file_label);
+				strcat(data_content_bytes, quote);
+				strcat(data_content_bytes, json_filename_str);
+				strcat(data_content_bytes, quote);
+				strcat(data_content_bytes, right_brace);
+				strcat(data_content_bytes, two_slash_n);
+				strcat(data_content_bytes, null_char);
 
 				strcat(http_OK_filename_str_official, http_OK_filename_str);
-				strcat(http_OK_filename_str_official, file_str_len);
-				strcat(http_OK_filename_str_official, json_filename_str);
+				int data_len = strlen(data_content_bytes);
+				char* data_len_as_str = num_2_key_str(data_len);
+				strcat(http_OK_filename_str_official, data_len_as_str);
 				strcat(http_OK_filename_str_official, two_slash_n);
-				strcat(http_OK_filename_str_official, json_filename_str);
-				strcat(http_OK_filename_str_official, two_slash_n);
-				printf("official_data: %s\n", http_OK_filename_str_official);
+				strcat(http_OK_filename_str_official, data_content_bytes);
+
+				printf("Here is the http: \n\n\n%s\n", http_OK_filename_str_official);
 
                	int send_200_ok = send(connect_d, http_OK_filename_str_official, strlen(http_OK_filename_str_official), 0);
 				//int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
