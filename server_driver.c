@@ -242,10 +242,28 @@ int main(int argc, char* argv[]) {
 				}
 				fclose(output_file);
 
-				/* Returns 200 OK if the content is good data */
-                char* result_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 13\n\nSaying HELLO!'";
+				// Build the HTTP OK filename string to send to the client.
+				// The server returns 200 OK if the content is good data
+                char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 13\n\nSaying HELLO!'";
+
+				// Use strcat to build the JSON string first by finding  the length of the JSON string
+				//	and send the filename to the client, so the client can request for that file
+				char* json_filename_str;
+				char* left_brace = "{";
+				char* right_brace = "right braceeee";
+				char* dot_mp4 = ".mp4";
+				char* null_term_char = "\0";
+
+				char* json_filename_str1 = strCatStr(left_brace, final_filename);
+				char* json_filename_str2 = strCatStr(json_filename_str1, right_brace);
+				//json_filename_str = strCatStr(right_brace, dot_mp4);
+				//json_filename_str = strCatStr(dot_mp4, null_term_char);
+				printf("Built json filename str: %s\n", left_brace);
+				printf(">> %s\n", json_filename_str2);
+
 				//char* http_result_str = strCatstr(result_str, json_data);
-                int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
+               	int send_200_ok = send(connect_d, json_filename_str, strlen(json_filename_str), 0);
+				//int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
                 if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending\n");
                     exit(1);
