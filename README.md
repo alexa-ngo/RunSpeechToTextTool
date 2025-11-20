@@ -13,18 +13,13 @@ Since this program is not requesting data, rather, it is posting data using
 
 HTTP Method: POST
 
-URL: http://localhost:8001/api/transcribe
+URL: http://localhost:8001/api/upload
 
 Required Header: Accept:application/json
-
-
 Example Request (cURL):
 
-curl -X POST "http://localhost:8001/api/transcribe" -H "Accept: application/json"
+curl -X POST -H 'Content-Type: video/mp4' -F "bob=@/home/ango/Downloads/Dream.mp4" http://localhost:1234/api/upload
 
-Seen on the Server side:
-
-![alt text](POST-api-transcribe.png)
 ___________________________________________________
 
 ## How to RECEIVE DATA
@@ -46,3 +41,7 @@ _____________________________________________________
 ## UML Sequence Diagram
 
 ![alt text](UMLsequenceDiagram.png)
+
+_____________________________________________________
+## Limitations
+- 100MB files (100,000,000 Bytes)

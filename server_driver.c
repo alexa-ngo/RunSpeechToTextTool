@@ -243,7 +243,8 @@ int main(int argc, char* argv[]) {
 				fclose(output_file);
 
 				/* Returns 200 OK if the content is good data */
-                char* result_str = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 18\n\nThis is good data.'";
+                char* result_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 13\n\nSaying HELLO!'";
+				//char* http_result_str = strCatstr(result_str, json_data);
                 int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
                 if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending\n");

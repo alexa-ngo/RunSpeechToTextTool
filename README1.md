@@ -19,5 +19,7 @@
     - install cmake. Since I am using Fedora, use sudo dnf install cmake
     - use ./build/bin/whisper-cli -f $HOME/Downloads/MLKDream.wav
 
-
+## Minimal Multipart Form Data Parser-c
+- https://github.com/mofosyne/minimal-multipart-form-data-parser-c
+- git clone the library and compile the library locally
 
