@@ -46,9 +46,11 @@ char *strCatStr(char *s1, char *s2) {
   // Get the length of s1[] and s2[]
   int lengthOfS1 = strlen(s1);
   int lengthOfS2 = strlen(s2);
+  printf("The lengthOfS1: %i\n", lengthOfS1);
+  printf("The lengthOfS2: %i\n", lengthOfS2);
 
   // Malloc a new buffer with the lengthOfs1 and lengthOfs2
-  char *result = malloc(lengthOfS1 + lengthOfS2);
+  char *result = malloc(lengthOfS1 + lengthOfS2 + 1);
 
   // Copy s1 and s2 into the result pointer
   for (int i = 0; i < lengthOfS1; i++) {
@@ -231,7 +233,6 @@ int main(int argc, char* argv[]) {
 				int file_name = (int)time(NULL);
 				char* filename_str = num_2_key_str(file_name);
 				char* final_filename = strCatStr(filename_str, ".mp4");
-				printf("The final filename: %s\n", final_filename);
 
 				// Making the output file
 				FILE* output_file = fopen(final_filename, "w");
@@ -244,25 +245,33 @@ int main(int argc, char* argv[]) {
 
 				// Build the HTTP OK filename string to send to the client.
 				// The server returns 200 OK if the content is good data
-                char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 13\n\nSaying HELLO!'";
+                char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
 
 				// Use strcat to build the JSON string first by finding  the length of the JSON string
 				//	and send the filename to the client, so the client can request for that file
-				char* json_filename_str;
+				char json_filename_str[100];
 				char* left_brace = "{";
-				char* right_brace = "right braceeee";
-				char* dot_mp4 = ".mp4";
-				char* null_term_char = "\0";
+				char* right_brace = "}";
+				strcat(json_filename_str, left_brace);
+				strcat(json_filename_str, final_filename);
+				strcat(json_filename_str, right_brace);
+				int json_filename_str_len = strlen(json_filename_str);
+				char* file_str_len = num_2_key_str(json_filename_str_len);
+				printf("file_str_len >> %s\n", file_str_len);
 
-				char* json_filename_str1 = strCatStr(left_brace, final_filename);
-				char* json_filename_str2 = strCatStr(json_filename_str1, right_brace);
-				//json_filename_str = strCatStr(right_brace, dot_mp4);
-				//json_filename_str = strCatStr(dot_mp4, null_term_char);
-				printf("Built json filename str: %s\n", left_brace);
-				printf(">> %s\n", json_filename_str2);
+				// Build the official filename string
+				char http_OK_filename_str_official[10000];
+				char* two_slash_n = "\n\n";
 
-				//char* http_result_str = strCatstr(result_str, json_data);
-               	int send_200_ok = send(connect_d, json_filename_str, strlen(json_filename_str), 0);
+				strcat(http_OK_filename_str_official, http_OK_filename_str);
+				strcat(http_OK_filename_str_official, file_str_len);
+				strcat(http_OK_filename_str_official, json_filename_str);
+				strcat(http_OK_filename_str_official, two_slash_n);
+				strcat(http_OK_filename_str_official, json_filename_str);
+				strcat(http_OK_filename_str_official, two_slash_n);
+				printf("official_data: %s\n", http_OK_filename_str_official);
+
+               	int send_200_ok = send(connect_d, http_OK_filename_str_official, strlen(http_OK_filename_str_official), 0);
 				//int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
                 if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending\n");
