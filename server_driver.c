@@ -9,6 +9,7 @@
  */
 
 #define BUF_LEN 256
+#define ONE_HUNDRED_MILLION 100000000
 
 /* Global variable declared in main */
 int listener_d;
@@ -39,31 +40,6 @@ char* num_2_key_str(int num) {
     return buffer;
 }
 
-
-/* StrCatStr concatenates two strings */
-char *strCatStr(char *s1, char *s2) {
-
-  // Get the length of s1[] and s2[]
-  int lengthOfS1 = strlen(s1);
-  int lengthOfS2 = strlen(s2);
-  printf("The lengthOfS1: %i\n", lengthOfS1);
-  printf("The lengthOfS2: %i\n", lengthOfS2);
-
-  // Malloc a new buffer with the lengthOfs1 and lengthOfs2
-  char *result = malloc(lengthOfS1 + lengthOfS2 + 1);
-
-  // Copy s1 and s2 into the result pointer
-  for (int i = 0; i < lengthOfS1; i++) {
-    result[i] = s1[i];
-  }
-
-  for (int j = 0; j < lengthOfS2; j++) {
-    result[lengthOfS1 + j] = s2[j];
-  }
-	return result;
-}
-
-
 /* Handles the shutdown process */
 void handle_shutdown(int sig) {
     if (listener_d) {
@@ -71,6 +47,15 @@ void handle_shutdown(int sig) {
     }
     printf("Bye!\n");
     exit(0);
+}
+
+/* Build the final filename */
+char* make_final_filename(void) {
+
+ 	int file_name = (int)time(NULL);
+   	char* filename_str = num_2_key_str(file_name);
+    char* final_filename = strcat(filename_str, ".mp4");
+	return final_filename;
 }
 
 int main(int argc, char* argv[]) {
@@ -142,12 +127,12 @@ int main(int argc, char* argv[]) {
                 exit(1);
             }
 
-			// Used to check if the request is /api/upload
+			// Buffer to check if the request is /api/upload
             char api_buffer[BYTES_OF_DATA_30];
             int api_buffer_idx = 0;
             int idx = 0;
 
-			// Used to check if the request is POST
+			// BUFFER to check if the request is POST
             char post_request_buffer[BYTES_OF_DATA_30];
             int post_request_idx = 0;
 
@@ -185,16 +170,16 @@ int main(int argc, char* argv[]) {
 
 				int each_char;
 
-				/* Parses out each byte of an audio/video file */
-				// Minimal Multipart Form Data Parser
+				/* Minimal Multipart Form Data Parser
+				   Parses out each byte of an audio/video file
+				   Credit: written by Bryan Khuu and can be found on GitHub */
                 static MinimalMultipartParserContext state = {0};
                 FILE *sockfile = (FILE*) fdopen(connect_d, "r");
 
 				// Malloc the size of the array to send
-				printf("will allocate the buffer for uploaded data now.\n");
-				int one_hundred_million = 100000000;
-				char* uploaded_data = malloc(sizeof(char) * one_hundred_million);
+				char* uploaded_data = malloc(sizeof(char) * ONE_HUNDRED_MILLION);
 
+				// Read and parse each character
 				int uploaded_data_index = 0;
                 while ((each_char = fgetc(sockfile)) != EOF) {
                     // Processor handles incoming stream character by character
@@ -214,6 +199,7 @@ int main(int argc, char* argv[]) {
                         break;
                     }
                 }
+
                 // Check if file has been received
                 if (minimal_multipart_parser_is_file_received(&state)) {
                     printf("File Received Successfully\n");
@@ -221,50 +207,39 @@ int main(int argc, char* argv[]) {
                     printf("File Reception Failed\n");
                 }
 
-				// Make the timestamp for the output file
-    			char buf[BUF_LEN] = {0};
-    			time_t rawtime = time(NULL);
-    			if (rawtime == -1) {
-       				puts("The time() function failed");
-        			return 1;
+				/* Builds the HTTP string */
+				// Make the filename. Ex. 181892.mp4
+				char* final_filename_output = make_final_filename();
+
+    			// Making the output file
+    			FILE* output_file = fopen(final_filename_output, "w");
+
+    			// Malloc the size of the array to send
+    			for (int j = 0; j < uploaded_data_index; j++) {
+        			fputc(uploaded_data[j], output_file);
     			}
+    			fclose(output_file);
 
-				// Make the output file name
-				int file_name = (int)time(NULL);
-				char* filename_str = num_2_key_str(file_name);
-				char* final_filename = strCatStr(filename_str, ".mp4");
-
-				// Making the output file
-				FILE* output_file = fopen(final_filename, "w");
-
-				// Malloc the size of the array to send
-				for (int j = 0; j < uploaded_data_index; j++) {
-					fputc(uploaded_data[j], output_file);
-				}
-				fclose(output_file);
-
-				// Build the HTTP OK filename string to send to the client.
-				// The server returns 200 OK if the content is good data
-                char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
+    			// Build the HTTP OK filename string to send to the client.
+    			// The server returns 200 OK if the content is good data
+				char http_OK_filename_str_official[100000];
+ 				char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
 
 				// Use strcat to build the JSON string first by finding  the length of the JSON string
 				//	and send the filename to the client, so the client can request for that file
 				char json_filename_str[100];
 				char* left_brace = "{";
 				char* right_brace = "}";
-				strcat(json_filename_str, final_filename);
-
-				//printf("file_str_len >> %s\n", file_str_len);
+				strcat(json_filename_str, final_filename_output);
 
 				// Build the official filename string
-				char http_OK_filename_str_official[100000];
 				char* file_label = "\"filename\" : ";
 				char* null_char = "\0";
 				char* quote = "\"";
-				char* two_slash_n = "\n\n"
-;
-				char data_content_bytes[100];
+				char* two_slash_n = "\n\n";
 
+				// Build the data json; Ex. {"filename" : "12345.mp4"}
+				char data_content_bytes[100];
 				strcat(data_content_bytes, left_brace);
 				strcat(data_content_bytes, file_label);
 				strcat(data_content_bytes, quote);
@@ -281,7 +256,7 @@ int main(int argc, char* argv[]) {
 				strcat(http_OK_filename_str_official, two_slash_n);
 				strcat(http_OK_filename_str_official, data_content_bytes);
 
-				printf("Here is the http: \n\n\n%s\n", http_OK_filename_str_official);
+				printf("%s\n", http_OK_filename_str_official);
 
                	int send_200_ok = send(connect_d, http_OK_filename_str_official, strlen(http_OK_filename_str_official), 0);
 				//int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
