@@ -58,6 +58,51 @@ char* make_final_filename(void) {
 	return final_filename;
 }
 
+/* Stream each byte */
+			void run_data_parser(int connect_d, char* final_filename_output) {
+				/* Minimal Multipart Form Data Parser
+				   Parses out each byte of an audio/video file
+				   Credit: written by Bryan Khuu and can be found on GitHub */
+                static MinimalMultipartParserContext state = {0};
+                FILE *sockfile = (FILE*) fdopen(connect_d, "r");
+
+				// Malloc the size of the array to send
+				char* uploaded_data = malloc(sizeof(char) * ONE_HUNDRED_MILLION);
+
+				// Read and parse each character
+				int uploaded_data_index = 0;
+				int each_char;
+                while ((each_char = fgetc(sockfile)) != EOF) {
+                    // Processor handles incoming stream character by character
+                    const MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
+
+					// Handle Special Events
+                    if (event == MultipartParserEvent_DataBufferAvailable) {
+                        // Data to be received
+                        for (unsigned int j = 0; j < minimal_multipart_parser_get_data_size(&state); j++) {
+                            const char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
+							uploaded_data[uploaded_data_index] = rx;
+							uploaded_data_index++;
+                        }
+                    }
+                    else if (event == MultipartParserEvent_DataStreamCompleted) {
+                        // Data Stream Finished;
+                        break;
+                    }
+                }
+    			// Making the output file
+    			FILE* output_file = fopen(final_filename_output, "w");
+
+    			// Malloc the size of the array to send
+    			for (int j = 0; j < uploaded_data_index; j++) {
+        			fputc(uploaded_data[j], output_file);
+    			}
+    			fclose(output_file);
+
+
+
+			}
+
 char* build_http_ok_response(char* final_filename_output, char* results) {
     			// Build the HTTP OK filename string to send to the client.
     			// The server returns 200 OK if the content is good data
@@ -210,63 +255,15 @@ int main(int argc, char* argv[]) {
             /* Check if the request from the client is a POST request with /api/upload */
             if ((strcmp(post_request_buffer, "POST") == 0) && (strcmp(api_buffer, "/api/upload")) == 0) {
 
-				int each_char;
-
-				/* Minimal Multipart Form Data Parser
-				   Parses out each byte of an audio/video file
-				   Credit: written by Bryan Khuu and can be found on GitHub */
-                static MinimalMultipartParserContext state = {0};
-                FILE *sockfile = (FILE*) fdopen(connect_d, "r");
-
-				// Malloc the size of the array to send
-				char* uploaded_data = malloc(sizeof(char) * ONE_HUNDRED_MILLION);
-
-				// Read and parse each character
-				int uploaded_data_index = 0;
-                while ((each_char = fgetc(sockfile)) != EOF) {
-                    // Processor handles incoming stream character by character
-                    const MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
-
-					// Handle Special Events
-                    if (event == MultipartParserEvent_DataBufferAvailable) {
-                        // Data to be received
-                        for (unsigned int j = 0; j < minimal_multipart_parser_get_data_size(&state); j++) {
-                            const char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
-							uploaded_data[uploaded_data_index] = rx;
-							uploaded_data_index++;
-                        }
-                    }
-                    else if (event == MultipartParserEvent_DataStreamCompleted) {
-                        // Data Stream Finished;
-                        break;
-                    }
-                }
-
-                // Check if file has been received
-                if (minimal_multipart_parser_is_file_received(&state)) {
-                    printf("File Received Successfully\n");
-                } else {
-                    printf("File Reception Failed\n");
-                }
-
 				/* Builds the HTTP string */
 				// Make the filename. Ex. 181892.mp4
 				char* final_filename_output = make_final_filename();
 
-    			// Making the output file
-    			FILE* output_file = fopen(final_filename_output, "w");
-
-    			// Malloc the size of the array to send
-    			for (int j = 0; j < uploaded_data_index; j++) {
-        			fputc(uploaded_data[j], output_file);
-    			}
-    			fclose(output_file);
+				/* Stream the data with connect_d */
+				run_data_parser(connect_d, final_filename_output);
 
 				char* result;
 				char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
-				printf("DEBUGGGG > %s\n", built_http_ok_response);
-
-
 
                	int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
 				//int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
