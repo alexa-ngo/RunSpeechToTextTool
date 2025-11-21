@@ -58,6 +58,48 @@ char* make_final_filename(void) {
 	return final_filename;
 }
 
+char* build_http_ok_response(char* final_filename_output, char* results) {
+    			// Build the HTTP OK filename string to send to the client.
+    			// The server returns 200 OK if the content is good data
+				char http_OK_filename_str_official[100000];
+ 				char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
+
+				// Use strcat to build the JSON string first by finding  the length of the JSON string
+				//	and send the filename to the client, so the client can request for that file
+				char json_filename_str[100];
+				char* left_brace = "{";
+				char* right_brace = "}";
+				strcat(json_filename_str, final_filename_output);
+
+				// Build the official filename string
+				char* file_label = "\"filename\" : ";
+				char* null_char = "\0";
+				char* quote = "\"";
+				char* two_slash_n = "\n\n";
+
+				// Build the data json; Ex. {"filename" : "12345.mp4"}
+				char data_content_bytes[100];
+				strcat(data_content_bytes, left_brace);
+				strcat(data_content_bytes, file_label);
+				strcat(data_content_bytes, quote);
+				strcat(data_content_bytes, json_filename_str);
+				strcat(data_content_bytes, quote);
+				strcat(data_content_bytes, right_brace);
+				strcat(data_content_bytes, two_slash_n);
+				strcat(data_content_bytes, null_char);
+
+				strcat(http_OK_filename_str_official, http_OK_filename_str);
+				int data_len = strlen(data_content_bytes);
+				char* data_len_as_str = num_2_key_str(data_len);
+				strcat(http_OK_filename_str_official, data_len_as_str);
+				strcat(http_OK_filename_str_official, two_slash_n);
+				strcat(http_OK_filename_str_official, data_content_bytes);
+
+				printf("%s\n", http_OK_filename_str_official);
+				results = http_OK_filename_str_official;
+				return results;
+			}
+
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {     // argv[0]    argv[1]
@@ -220,45 +262,13 @@ int main(int argc, char* argv[]) {
     			}
     			fclose(output_file);
 
-    			// Build the HTTP OK filename string to send to the client.
-    			// The server returns 200 OK if the content is good data
-				char http_OK_filename_str_official[100000];
- 				char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
+				char* result;
+				char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
+				printf("DEBUGGGG > %s\n", built_http_ok_response);
 
-				// Use strcat to build the JSON string first by finding  the length of the JSON string
-				//	and send the filename to the client, so the client can request for that file
-				char json_filename_str[100];
-				char* left_brace = "{";
-				char* right_brace = "}";
-				strcat(json_filename_str, final_filename_output);
 
-				// Build the official filename string
-				char* file_label = "\"filename\" : ";
-				char* null_char = "\0";
-				char* quote = "\"";
-				char* two_slash_n = "\n\n";
 
-				// Build the data json; Ex. {"filename" : "12345.mp4"}
-				char data_content_bytes[100];
-				strcat(data_content_bytes, left_brace);
-				strcat(data_content_bytes, file_label);
-				strcat(data_content_bytes, quote);
-				strcat(data_content_bytes, json_filename_str);
-				strcat(data_content_bytes, quote);
-				strcat(data_content_bytes, right_brace);
-				strcat(data_content_bytes, two_slash_n);
-				strcat(data_content_bytes, null_char);
-
-				strcat(http_OK_filename_str_official, http_OK_filename_str);
-				int data_len = strlen(data_content_bytes);
-				char* data_len_as_str = num_2_key_str(data_len);
-				strcat(http_OK_filename_str_official, data_len_as_str);
-				strcat(http_OK_filename_str_official, two_slash_n);
-				strcat(http_OK_filename_str_official, data_content_bytes);
-
-				printf("%s\n", http_OK_filename_str_official);
-
-               	int send_200_ok = send(connect_d, http_OK_filename_str_official, strlen(http_OK_filename_str_official), 0);
+               	int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
 				//int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
                 if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending\n");
