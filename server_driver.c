@@ -160,8 +160,13 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
 			"data" : "Hi there!"
 		}
 
-	Steps:
-		1.
+	Workflow:
+		1. Client sends a request {"filename":"1234.mp4"} to the server
+		2. Server uses the JSON library to conver the JSON string into a JSON object
+		3. Retrieve the filename fromt the JSON object
+		4. Use the filename to transcribe
+		5. Make the transcription file
+		6. Send the transcription data back to the client {"data":"Hi there!"}
 */
 
 int main(int argc, char* argv[]) {
