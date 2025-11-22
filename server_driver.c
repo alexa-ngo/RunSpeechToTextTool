@@ -1,43 +1,26 @@
 #include "server.h"
-#include <string.h>
-#include <time.h>
-#include "minimal_multipart_parser.h"
 
 /*
  *  This is a server that reads in data from a client.
  *          Usage: ./server <port_num>
+ *
+ *  To compile the program:
+ *         gcc -ljson-c server_driver.c server.c minimal_multi_parser.c -o the_program
+           ./the_program 1234
  */
-
-#define BUF_LEN 256
-#define ONE_HUNDRED_MILLION 100000000
 
 /* Global variable declared in main */
 int listener_d;
 
-/* Converts an integer to a string */
-char* num_2_key_str(int num) {
-    int idx = 0;
-    char* buffer = malloc(sizeof(char) * 7);		// just enough for 7 digits
+/* Catch the signal */
+int catch_signal(int sig, void (*handler)(int)) {
 
-    int quotient = num;
-    while (quotient > 0) {
-        int digit = quotient % 10;
-
-        char v = '0' + digit;
-        buffer[idx] = v;
-        idx++;
-        quotient = quotient / 10;
-    }
-    buffer[idx] = '\0';		// don't forget the null terminating character
-
-    // Reverse the string because the "number" is now backwards.
-    int buffer_length = idx;
-    for (int i = 0, j = buffer_length -1; i < j; i++, j--) {
-        char t = buffer[i];
-        buffer[i] = buffer[j];
-        buffer[j] = t;
-    }
-    return buffer;
+    struct sigaction action;
+    action.sa_handler = handler;
+    /* Use an empty mask */
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    return sigaction (sig, &action, NULL);
 }
 
 /* Handles the shutdown process */
@@ -48,105 +31,6 @@ void handle_shutdown(int sig) {
     printf("Bye!\n");
     exit(0);
 }
-
-/* Build the final filename */
-char* make_final_filename(void) {
-
- 	int file_name = (int)time(NULL);
-   	char* filename_str = num_2_key_str(file_name);
-    char* final_filename = strcat(filename_str, ".mp4");
-	return final_filename;
-}
-
-/* Stream each byte */
-			void run_data_parser(int connect_d, char* final_filename_output) {
-				/* Minimal Multipart Form Data Parser
-				   Parses out each byte of an audio/video file
-				   Credit: written by Bryan Khuu and can be found on GitHub */
-                static MinimalMultipartParserContext state = {0};
-                FILE *sockfile = (FILE*) fdopen(connect_d, "r");
-
-				// Malloc the size of the array to send
-				char* uploaded_data = malloc(sizeof(char) * ONE_HUNDRED_MILLION);
-
-				// Read and parse each character
-				int uploaded_data_index = 0;
-				int each_char;
-                while ((each_char = fgetc(sockfile)) != EOF) {
-                    // Processor handles incoming stream character by character
-                    const MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
-
-					// Handle Special Events
-                    if (event == MultipartParserEvent_DataBufferAvailable) {
-                        // Data to be received
-                        for (unsigned int j = 0; j < minimal_multipart_parser_get_data_size(&state); j++) {
-                            const char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
-							uploaded_data[uploaded_data_index] = rx;
-							uploaded_data_index++;
-                        }
-                    }
-                    else if (event == MultipartParserEvent_DataStreamCompleted) {
-                        // Data Stream Finished;
-                        break;
-                    }
-                }
-
-				// Create output file in the videos directory
-				char filename[50] = "\0";
-				char* filepath = "./videos/";
-				strcat(filename, filepath);
-				strcat(filename, final_filename_output);
-				FILE* output_file = fopen(filename, "w");
-				printf("the filename: %s\n", filename);
-
-    			// Malloc the size of the array to send
-    			for (int j = 0; j < uploaded_data_index; j++) {
-        			fputc(uploaded_data[j], output_file);
-    			}
-    			fclose(output_file);
-			}
-
-char* build_http_ok_response(char* final_filename_output, char* results) {
-    			// Build the HTTP OK filename string to send to the client.
-    			// The server returns 200 OK if the content is good data
-				char http_OK_filename_str_official[100000];
- 				char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
-
-				// Use strcat to build the JSON string first by finding  the length of the JSON string
-				//	and send the filename to the client, so the client can request for that file
-				char json_filename_str[100];
-				char* left_brace = "{";
-				char* right_brace = "}";
-				strcat(json_filename_str, final_filename_output);
-
-				// Build the official filename string
-				char* file_label = "\"filename\" : ";
-				char* null_char = "\0";
-				char* quote = "\"";
-				char* two_slash_n = "\n\n";
-
-				// Build the data json; Ex. {"filename" : "12345.mp4"}
-				char data_content_bytes[100];
-				strcat(data_content_bytes, left_brace);
-				strcat(data_content_bytes, file_label);
-				strcat(data_content_bytes, quote);
-				strcat(data_content_bytes, json_filename_str);
-				strcat(data_content_bytes, quote);
-				strcat(data_content_bytes, right_brace);
-				strcat(data_content_bytes, two_slash_n);
-				strcat(data_content_bytes, null_char);
-
-				strcat(http_OK_filename_str_official, http_OK_filename_str);
-				int data_len = strlen(data_content_bytes);
-				char* data_len_as_str = num_2_key_str(data_len);
-				strcat(http_OK_filename_str_official, data_len_as_str);
-				strcat(http_OK_filename_str_official, two_slash_n);
-				strcat(http_OK_filename_str_official, data_content_bytes);
-
-				printf("%s\n", http_OK_filename_str_official);
-				results = http_OK_filename_str_official;
-				return results;
-			}
 
 int main(int argc, char* argv[]) {
 
@@ -269,7 +153,18 @@ int main(int argc, char* argv[]) {
 				char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
 
                	int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
-				//int send_200_ok = send(connect_d, result_str, strlen(result_str), 0);
+
+            	char filename_str[100];
+            	char* left_brace = "{";
+				char* right_brace = "}";
+            	strcat(filename_str, left_brace);
+				strcat(filename_str, final_filename_output);
+				strcat(filename_str, right_brace);
+				printf("File name: %s\n", filename_str);
+
+				// Exeicute the api transcribe method
+				api_transcribe(filename_str);
+
                 if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending\n");
                     exit(1);

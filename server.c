@@ -4,6 +4,46 @@
 *      This is the code for the microservice for the Speech-To-Text Tool.
 */
 
+/*
+    Method: /api/transcribe
+    Purpose: Client sends a JSON string to the server to retrieve the transcribed data.
+                The server sends the transcribed data back to the client.
+    Input: JSON string
+        {
+            "filename" : "1234.mp4"
+        }
+
+    Output: Transcribed data sent from the server back to the client
+        {
+            "data" : "Hi there!"
+        }
+
+    Workflow:
+        1. Client sends a request {"filename":"1234.mp4"} to the server
+        2. Server uses the JSON library to conver the JSON string into a JSON object
+        3. Retrieve the filename from the JSON object
+        4. Use the filename to transcribe
+        5. Make the transcription file
+        6. Send the transcription data back to the client {"data":"Hi there!"}
+*/
+int api_transcribe(char* input_json_str) {
+
+    // Make the input_json_str as a JSON object with the JSON-C library
+    const char filename[] = "sample.json";
+    json_object* jdata;
+    const char* jstring;
+
+    jdata = json_object_from_file(filename);
+    if (jdata == NULL) {
+        fprintf(stderr, "Unable to process %s\n", filename);
+        exit(1);
+    }
+    jstring = json_object_to_json_string_ext(jdata, JSON_C_TO_STRING_PRETTY);
+    puts(jstring);
+    return 0;
+}
+
+
 /* Create a streaming socket */
 int open_listener_socket(void) {
     int streaming_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -36,21 +76,89 @@ void bind_to_port(int socket, int port) {
     }
 }
 
-/* Catch the signal */
-int catch_signal(int sig, void (*handler)(int)) {
+char* build_http_ok_response(char* final_filename_output, char* results) {
+    // Build the HTTP OK filename string to send to the client.
+    // The server returns 200 OK if the content is good data
+    char http_OK_filename_str_official[100000];
+    char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
 
-    struct sigaction action;
-    action.sa_handler = handler;
-    /* Use an empty mask */
-    sigemptyset(&action.sa_mask);
-    action.sa_flags = 0;
-    return sigaction (sig, &action, NULL);
+    // Use strcat to build the JSON string first by finding  the length of the JSON string
+    //	and send the filename to the client, so the client can request for that file
+    char json_filename_str[100];
+    char* left_brace = "{";
+    char* right_brace = "}";
+    strcat(json_filename_str, final_filename_output);
+
+    // Build the official filename string
+    char* file_label = "\"filename\" : ";
+    char* null_char = "\0";
+    char* quote = "\"";
+    char* two_slash_n = "\n\n";
+
+    // Build the data json; Ex. {"filename" : "12345.mp4"}
+    char data_content_bytes[100];
+    strcat(data_content_bytes, left_brace);
+    strcat(data_content_bytes, file_label);
+    strcat(data_content_bytes, quote);
+    strcat(data_content_bytes, json_filename_str);
+    strcat(data_content_bytes, quote);
+    strcat(data_content_bytes, right_brace);
+    strcat(data_content_bytes, two_slash_n);
+    strcat(data_content_bytes, null_char);
+
+    strcat(http_OK_filename_str_official, http_OK_filename_str);
+    int data_len = strlen(data_content_bytes);
+    char* data_len_as_str = num_2_key_str(data_len);
+    strcat(http_OK_filename_str_official, data_len_as_str);
+    strcat(http_OK_filename_str_official, two_slash_n);
+    strcat(http_OK_filename_str_official, data_content_bytes);
+
+    printf("%s\n", http_OK_filename_str_official);
+    results = http_OK_filename_str_official;
+    return results;
 }
+
+
 
 /* Kill the process */
 void kill_the_process(void) {
     fprintf(stderr, "Goodbye, I am ending this process now...\n");
     exit(1);
+}
+
+/* Build the final filename */
+char* make_final_filename(void) {
+
+    int file_name = (int)time(NULL);
+    char* filename_str = num_2_key_str(file_name);
+    char* final_filename = strcat(filename_str, ".mp4");
+    return final_filename;
+}
+
+/* Converts an integer to a string */
+char* num_2_key_str(int num) {
+    int idx = 0;
+    char* buffer = malloc(sizeof(char) * 7);		// just enough for 7 digits
+
+    int quotient = num;
+    while (quotient > 0) {
+        int digit = quotient % 10;
+
+        char v = '0' + digit;
+        buffer[idx] = v;
+        idx++;
+        quotient = quotient / 10;
+    }
+    buffer[idx] = '\0';		// don't forget the null terminating character
+
+    // Reverse the string because the "number" is now backwards.
+    int buffer_length = idx;
+    for (int i = 0, j = buffer_length -1; i < j; i++, j--) {
+        char t = buffer[i];
+        buffer[i] = buffer[j];
+        buffer[j] = t;
+    }
+    return buffer;
 }
 
 /* Receive the data from a socket */
@@ -76,4 +184,52 @@ int read_in(int socket, char* buf, int len) {
         buffer[received_data - 1] = '\0';
     }
     return len - slen;
+}
+
+/* Stream each byte */
+void run_data_parser(int connect_d, char* final_filename_output) {
+    /* Minimal Multipart Form Data Parser
+       Parses out each byte of an audio/video file
+       Credit: written by Bryan Khuu and can be found on GitHub */
+    static MinimalMultipartParserContext state = {0};
+    FILE *sockfile = (FILE*) fdopen(connect_d, "r");
+
+    // Malloc the size of the array to send
+    char* uploaded_data = malloc(sizeof(char) * ONE_HUNDRED_MILLION);
+
+    // Read and parse each character
+    int uploaded_data_index = 0;
+    int each_char;
+    while ((each_char = fgetc(sockfile)) != EOF) {
+        // Processor handles incoming stream character by character
+        const MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
+
+        // Handle Special Events
+        if (event == MultipartParserEvent_DataBufferAvailable) {
+            // Data to be received
+            for (unsigned int j = 0; j < minimal_multipart_parser_get_data_size(&state); j++) {
+                const char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
+                uploaded_data[uploaded_data_index] = rx;
+                uploaded_data_index++;
+            }
+        }
+        else if (event == MultipartParserEvent_DataStreamCompleted) {
+            // Data Stream Finished;
+            break;
+        }
+    }
+
+    // Create output file in the videos directory
+    char filename[50] = "\0";
+    char* filepath = "./videos/";
+    strcat(filename, filepath);
+    strcat(filename, final_filename_output);
+    FILE* output_file = fopen(filename, "w");
+    printf("the filename: %s\n", filename);
+
+    // Malloc the size of the array to send
+    for (int j = 0; j < uploaded_data_index; j++) {
+        fputc(uploaded_data[j], output_file);
+    }
+    fclose(output_file);
 }
