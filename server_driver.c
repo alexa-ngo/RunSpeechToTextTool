@@ -91,12 +91,13 @@ char* make_final_filename(void) {
                     }
                 }
 
-    			// Create output file in the videos directory
-				char filename[50];
+				// Create output file in the videos directory
+				char filename[50] = "\0";
 				char* filepath = "./videos/";
 				strcat(filename, filepath);
 				strcat(filename, final_filename_output);
-    			FILE* output_file = fopen(filename, "w");
+				FILE* output_file = fopen(filename, "w");
+				printf("the filename: %s\n", filename);
 
     			// Malloc the size of the array to send
     			for (int j = 0; j < uploaded_data_index; j++) {
@@ -141,33 +142,11 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
 				strcat(http_OK_filename_str_official, data_len_as_str);
 				strcat(http_OK_filename_str_official, two_slash_n);
 				strcat(http_OK_filename_str_official, data_content_bytes);
+
 				printf("%s\n", http_OK_filename_str_official);
 				results = http_OK_filename_str_official;
 				return results;
 			}
-
-/*
-	Method: /api/transcribe
-	Purpose: Client sends a JSON string to the server to retrieve the transcribed data.
-				The server sends the transcribed data back to the client.
-	Input: JSON string
-		{
-			"filename" : "1234.mp4"
-		}
-
-	Output: Transcribed data sent from the server back to the client
-		{
-			"data" : "Hi there!"
-		}
-
-	Workflow:
-		1. Client sends a request {"filename":"1234.mp4"} to the server
-		2. Server uses the JSON library to conver the JSON string into a JSON object
-		3. Retrieve the filename fromt the JSON object
-		4. Use the filename to transcribe
-		5. Make the transcription file
-		6. Send the transcription data back to the client {"data":"Hi there!"}
-*/
 
 int main(int argc, char* argv[]) {
 
