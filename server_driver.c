@@ -80,95 +80,9 @@ int main(int argc, char* argv[]) {
             /* Parent is closing the CLIENT SOCKET */
             close(connect_d);
         } else {
-			/* This is the child Process */
-            /* Close the listener.
-            The process is a child process and should handle the request */
-            close(listener_d);
 
-            /* Clear the buffer first */
-            memset(buf, '\0', BYTES_OF_DATA_100000);
+            void child_process_handles_request(listener_d, connect_d, buf);
 
-            /* Read the client's message from the socket */
-            int chars_read = recv(connect_d, buf, BYTES_OF_DATA_100000, 0);
-            if (chars_read == 0) {
-                fprintf(stderr, "Error in receiving\n");
-                close(connect_d);
-                exit(1);
-            }
-            if (chars_read == 0) {
-                fprintf(stderr, "Error. Received 0 bytes.");
-                close(connect_d);
-                exit(1);
-            }
-
-			// Buffer to check if the request is /api/upload
-            char api_buffer[BYTES_OF_DATA_30];
-            int api_buffer_idx = 0;
-            int idx = 0;
-
-			// BUFFER to check if the request is POST
-            char post_request_buffer[BYTES_OF_DATA_30];
-            int post_request_idx = 0;
-
-            /* See if this is a POST request */
-            while (buf[idx] != ' ') {
-                post_request_buffer[idx] = buf[idx];
-                idx++;
-            }
-            /* Reset the index */
-            idx = 0;
-
-            /* Iterate through a buf[BYTES_OF_DATA_100000];
-             extract the /api/upload
-            */
-    		int first_idx = 0;
-            while (buf[idx] != '\0') {
-                idx++;
-                if (buf[idx] == ' ') {
-                    idx++;
-                    if (first_idx == 0) {
-                        first_idx = idx;
-                    }
-                }
-            }
-
-            /* Places /api/upload into the API buffer */
-            while (buf[first_idx] != ' ') {
-                api_buffer[api_buffer_idx] = buf[first_idx];
-                api_buffer_idx++;
-                first_idx++;
-            }
-
-            /* Check if the request from the client is a POST request with /api/upload */
-            if ((strcmp(post_request_buffer, "POST") == 0) && (strcmp(api_buffer, "/api/upload")) == 0) {
-
-				/* Builds the HTTP string */
-				// Make the filename. Ex. 181892.mp4
-				char* final_filename_output = make_final_filename();
-
-				/* Stream the data with connect_d */
-				run_data_parser(connect_d, final_filename_output);
-
-				char* result;
-				char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
-
-               	int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
-
-            	char filename_str[100];
-            	char* left_brace = "{";
-				char* right_brace = "}";
-            	strcat(filename_str, left_brace);
-				strcat(filename_str, final_filename_output);
-				strcat(filename_str, right_brace);
-				printf("File name: %s\n", filename_str);
-
-				// Exeicute the api transcribe method
-				api_transcribe(filename_str);
-
-                if (send_200_ok == DOES_NOT_EXIST) {
-                    fprintf(stderr, "Error in 200 sending\n");
-                    exit(1);
-                }
             } else {
                 // Returns the HTTP/1.1 400 Error Message
                 char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.'";

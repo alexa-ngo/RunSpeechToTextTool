@@ -34,6 +34,7 @@ int api_transcribe(char* input_json_str);
 void bind_to_port(int socket, int port);
 char* build_http_ok_response(char* final_filename_output, char* results);
 int catch_signal(int sig, void (*handler)(int));
+void child_procress
 char* data_longer_than_or_equal_to_key(int key_length, char* key_str, int data_length, char* data_str);
 //void handle_shutdown(int sig, int listener_d);
 void kill_the_process(void);
