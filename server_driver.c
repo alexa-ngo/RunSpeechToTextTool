@@ -59,51 +59,51 @@ char* make_final_filename(void) {
 }
 
 /* Stream each byte */
-			void run_data_parser(int connect_d, char* final_filename_output) {
-				/* Minimal Multipart Form Data Parser
-				   Parses out each byte of an audio/video file
-				   Credit: written by Bryan Khuu and can be found on GitHub */
-                static MinimalMultipartParserContext state = {0};
-                FILE *sockfile = (FILE*) fdopen(connect_d, "r");
+        void run_data_parser(int connect_d, char* final_filename_output) {
+            /* Minimal Multipart Form Data Parser
+               Parses out each byte of an audio/video file
+               Credit: written by Bryan Khuu and can be found on GitHub */
+            static MinimalMultipartParserContext state = {0};
+            FILE *sockfile = (FILE*) fdopen(connect_d, "r");
 
-				// Malloc the size of the array to send
-				char* uploaded_data = malloc(sizeof(char) * ONE_HUNDRED_MILLION);
+            // Malloc the size of the array to send
+            char* uploaded_data = malloc(sizeof(char) * ONE_HUNDRED_MILLION);
 
-				// Read and parse each character
-				int uploaded_data_index = 0;
-				int each_char;
-                while ((each_char = fgetc(sockfile)) != EOF) {
-                    // Processor handles incoming stream character by character
-                    const MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
+            // Read and parse each character
+            int uploaded_data_index = 0;
+            int each_char;
+            while ((each_char = fgetc(sockfile)) != EOF) {
+                // Processor handles incoming stream character by character
+                const MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
 
-					// Handle Special Events
-                    if (event == MultipartParserEvent_DataBufferAvailable) {
-                        // Data to be received
-                        for (unsigned int j = 0; j < minimal_multipart_parser_get_data_size(&state); j++) {
-                            const char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
-							uploaded_data[uploaded_data_index] = rx;
-							uploaded_data_index++;
-                        }
-                    }
-                    else if (event == MultipartParserEvent_DataStreamCompleted) {
-                        // Data Stream Finished;
-                        break;
+                // Handle Special Events
+                if (event == MultipartParserEvent_DataBufferAvailable) {
+                    // Data to be received
+                    for (unsigned int j = 0; j < minimal_multipart_parser_get_data_size(&state); j++) {
+                        const char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
+                        uploaded_data[uploaded_data_index] = rx;
+                        uploaded_data_index++;
                     }
                 }
+                else if (event == MultipartParserEvent_DataStreamCompleted) {
+                    // Data Stream Finished;
+                    break;
+                }
+            }
 
-    			// Create output file in the videos directory
-				char filename[50];
-				char* filepath = "./videos/";
-				strcat(filename, filepath);
-				strcat(filename, final_filename_output);
-    			FILE* output_file = fopen(filename, "w");
+            // Create output file in the videos directory
+            char filename[50];
+            char* filepath = "./videos/";
+            strcat(filename, filepath);
+            strcat(filename, final_filename_output);
+            FILE* output_file = fopen(filename, "w");
 
-    			// Malloc the size of the array to send
-    			for (int j = 0; j < uploaded_data_index; j++) {
-        			fputc(uploaded_data[j], output_file);
-    			}
-    			fclose(output_file);
-			}
+            // Malloc the size of the array to send
+            for (int j = 0; j < uploaded_data_index; j++) {
+                fputc(uploaded_data[j], output_file);
+            }
+            fclose(output_file);
+        }
 
 char* build_http_ok_response(char* final_filename_output, char* results) {
     			// Build the HTTP OK filename string to send to the client.
@@ -145,6 +145,24 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
 				results = http_OK_filename_str_official;
 				return results;
 			}
+
+/*
+	Method: /api/transcribe
+	Purpose: Client sends a JSON string to the server to retrieve the transcribed data.
+				The server sends the transcribed data back to the client.
+	Input: JSON string
+		{
+			"filename" : "1234.mp4"
+		}
+
+	Output: Transcribed data sent from the server back to the client
+		{
+			"data" : "Hi there!"
+		}
+
+	Steps:
+		1.
+*/
 
 int main(int argc, char* argv[]) {
 
