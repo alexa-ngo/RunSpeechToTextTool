@@ -90,17 +90,19 @@ char* make_final_filename(void) {
                         break;
                     }
                 }
-    			// Making the output file
-    			FILE* output_file = fopen(final_filename_output, "w");
+
+    			// Create output file in the videos directory
+				char filename[50];
+				char* filepath = "./videos/";
+				strcat(filename, filepath);
+				strcat(filename, final_filename_output);
+    			FILE* output_file = fopen(filename, "w");
 
     			// Malloc the size of the array to send
     			for (int j = 0; j < uploaded_data_index; j++) {
         			fputc(uploaded_data[j], output_file);
     			}
     			fclose(output_file);
-
-
-
 			}
 
 char* build_http_ok_response(char* final_filename_output, char* results) {
@@ -139,7 +141,6 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
 				strcat(http_OK_filename_str_official, data_len_as_str);
 				strcat(http_OK_filename_str_official, two_slash_n);
 				strcat(http_OK_filename_str_official, data_content_bytes);
-
 				printf("%s\n", http_OK_filename_str_official);
 				results = http_OK_filename_str_official;
 				return results;
