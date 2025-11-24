@@ -29,12 +29,12 @@
 
 
 // Input of the filename string: {1234.mp4}
-char* api_transcribe(int connect_d, char* retrieved_file_in_vid_dir_str) {
+char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_str) {
 
 	printf("File path: %s\n", retrieved_file_in_vid_dir_str);
 
     // Make the input_json_str as a JSON object with the JSON-C library
-    char filename[] = "./videos/1.txt";
+    char filename[] = "./videos/18.txt";
 
     char find_this_key[] = "filename";
     json_object *jdata, *object;
@@ -42,7 +42,14 @@ char* api_transcribe(int connect_d, char* retrieved_file_in_vid_dir_str) {
     jdata = json_object_from_file(filename);
     if (jdata == NULL) {
         fprintf(stderr, "Unable to process %s\n", find_this_key);
-        exit(1);
+		// Returns the HTTP/1.1 400 Error Message
+		char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n";
+		int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
+		printf(">> Result String: %s\n", result_str);
+		if (send_400_error_code == DOES_NOT_EXIST) {
+			fprintf(stderr, "Error in sending\n");
+			exit(1);
+		}
     }
 
     // The value output is 1234.mp4

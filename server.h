@@ -30,7 +30,7 @@
 #define TOTAL_CHAR_OF_ALPHABET 26
 #define TRUE 1
 
-char* api_transcribe(int connect_d, char* retrieved_file_in_vid_dir_str);
+char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_str);
 void bind_to_port(int socket, int port);
 char* build_http_ok_response(char* final_filename_output, char* results);
 void child_process_handles_request(int listener_d, int connect_d, char* buf);

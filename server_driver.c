@@ -44,7 +44,7 @@ char* transcribe_video_method(int connect_d, char* final_filename_output, char r
     if (retrieved_file_in_vid_dir_str != NULL) {
 
 		// Get the value of the key caled "filename"
-		char* data_val_of_file = api_transcribe(connect_d, retrieved_file_in_vid_dir_str);
+		char* data_val_of_file = api_transcribe_get_value(connect_d, retrieved_file_in_vid_dir_str);
     printf("File exists returned value: %s\n", data_val_of_file);
 	} else {
 		// Returns the HTTP/1.1 400 Error Message
@@ -176,11 +176,6 @@ int main(int argc, char* argv[]) {
 				// Stream the data with connect_d
 				run_data_parser(connect_d, final_filename_output);
 
-				char* result;
-				char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
-
-               	int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
-
                 // Create the filename to send over the network
                 // filename_str returns {1234.mp4}
             	char filename_str[100];
@@ -194,12 +189,27 @@ int main(int argc, char* argv[]) {
     			char retrieved_file_in_vid_dir_str[100];
                 char* retrieved_file_in_vid_dir_str_result = transcribe_video_method(connect_d, final_filename_output, retrieved_file_in_vid_dir_str);
 
-               // api_transcribe(retrieved_file_in_vid_dir_str);
+               	char* api_results = api_transcribe_get_value(connect_d, retrieved_file_in_vid_dir_str);
 
-                if (send_200_ok == DOES_NOT_EXIST) {
-                    fprintf(stderr, "Error in 200 sending\n");
-                    exit(1);
-                }
+				char* result;
+				if (api_results != NULL) {
+					char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
+					int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
+                	if (send_200_ok == DOES_NOT_EXIST) {
+                    	fprintf(stderr, "Error in 200 sending in send 200 OK\n");
+                    	exit(1);
+                	}
+				} else {
+					// Send an 400 Error if the file file is not in the directory
+			    	char* built_http_ok_response = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n'";
+				    int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
+                	if (send_200_ok == DOES_NOT_EXIST) {
+                    	fprintf(stderr, "Error in 200 sending in send 200 OK\n");
+                    	exit(1);
+                	}
+				}
+
+
             } else {
                 // Returns the HTTP/1.1 400 Error Message
                 char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.'";
