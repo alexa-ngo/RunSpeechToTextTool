@@ -30,7 +30,7 @@
 #define TOTAL_CHAR_OF_ALPHABET 26
 #define TRUE 1
 
-int api_transcribe(char* input_json_str);
+char* api_transcribe(int connect_d, char* retrieved_file_in_vid_dir_str);
 void bind_to_port(int socket, int port);
 char* build_http_ok_response(char* final_filename_output, char* results);
 void child_process_handles_request(int listener_d, int connect_d, char* buf);
@@ -43,5 +43,6 @@ int open_listener_socket(void);
 int read_in(int socket, char* buf, int len);
 void run_data_parser(int connect_d, char* file_filename_output);
 int say(int socket, char* s);
+char* transtribe_video_method(int conenct_d, char* final_filename_output, char retrieved_file_in_vid_dir_str);
 
 #endif

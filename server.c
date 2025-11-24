@@ -20,34 +20,42 @@
 
     Workflow:
         1. Client sends a request {"filename":"1234.mp4"} to the server
-        2. Server uses the JSON library to conver the JSON string into a JSON object
-        3. Retrieve the filename from the JSON object
+        2. Server uses the JSON library to convert the JSON string into a JSON object
+        3. Retrieve the filename from the JSN object
         4. Use the filename to transcribe
         5. Make the transcription file
         6. Send the transcription data back to the client {"data":"Hi there!"}
 */
-int api_transcribe(char* input_json_str) {
+
+
+// Input of the filename string: {1234.mp4}
+char* api_transcribe(int connect_d, char* retrieved_file_in_vid_dir_str) {
+
+	printf("File path: %s\n", retrieved_file_in_vid_dir_str);
 
     // Make the input_json_str as a JSON object with the JSON-C library
-    const char filename[] = "sample.json";
-    json_object* jdata;
-    const char* jstring;
+    char filename[] = "./videos/1.txt";
+
+    char find_this_key[] = "filename";
+    json_object *jdata, *object;
 
     jdata = json_object_from_file(filename);
     if (jdata == NULL) {
-        fprintf(stderr, "Unable to process %s\n", filename);
+        fprintf(stderr, "Unable to process %s\n", find_this_key);
         exit(1);
     }
-    jstring = json_object_to_json_string_ext(jdata, JSON_C_TO_STRING_PRETTY);
-    puts(jstring);
-    return 0;
-}
 
+    // The value output is 1234.mp4
+    json_object_object_get_ex(jdata, find_this_key, &object);
+    char* value = json_object_get_string(object);
+
+    return value;
+}
 
 /* Create a streaming socket */
 int open_listener_socket(void) {
     int streaming_socket = socket(PF_INET, SOCK_STREAM, 0);
-    if (streaming_socket == -1) {
+    if (streaming_socket == -1        ) {
         fprintf(stderr, "Can't open the socket");
         exit(1);
     }
@@ -113,7 +121,7 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
     strcat(http_OK_filename_str_official, two_slash_n);
     strcat(http_OK_filename_str_official, data_content_bytes);
 
-    printf("%s\n", http_OK_filename_str_official);
+    // Result outputs: {"filename" : "1234.mp4"}
     results = http_OK_filename_str_official;
     return results;
 }
@@ -201,13 +209,13 @@ void run_data_parser(int connect_d, char* final_filename_output) {
     int each_char;
     while ((each_char = fgetc(sockfile)) != EOF) {
         // Processor handles incoming stream character by character
-        const MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
+        MultipartParserEvent event = minimal_multipart_parser_process(&state, (char)each_char);
 
         // Handle Special Events
         if (event == MultipartParserEvent_DataBufferAvailable) {
             // Data to be received
             for (unsigned int j = 0; j < minimal_multipart_parser_get_data_size(&state); j++) {
-                const char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
+                char rx = minimal_multipart_parser_get_data_buffer(&state)[j];
                 uploaded_data[uploaded_data_index] = rx;
                 uploaded_data_index++;
             }
@@ -219,12 +227,16 @@ void run_data_parser(int connect_d, char* final_filename_output) {
     }
 
     // Create output file in the videos directory
+    /* ./videos/1763933938.mp4
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+        Content-Length: 33
+    */
     char filename[50] = "\0";
     char* filepath = "./videos/";
     strcat(filename, filepath);
     strcat(filename, final_filename_output);
     FILE* output_file = fopen(filename, "w");
-    printf("the filename: %s\n", filename);
 
     // Malloc the size of the array to send
     for (int j = 0; j < uploaded_data_index; j++) {

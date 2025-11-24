@@ -32,6 +32,32 @@ void handle_shutdown(int sig) {
     exit(0);
 }
 
+// Check if the video (XYZ.mp4) video exists in the videos directory
+char* transcribe_video_method(int connect_d, char* final_filename_output, char retrieved_file_in_vid_dir_str[100]) {
+
+	// Make the video in ./videos/XYZ.mp4
+    char* video_path_str = "./videos/";
+    strcat(retrieved_file_in_vid_dir_str, video_path_str);
+    strcat(retrieved_file_in_vid_dir_str, final_filename_output);
+
+	// Check file exists
+    if (retrieved_file_in_vid_dir_str != NULL) {
+
+		// Get the value of the key caled "filename"
+		char* data_val_of_file = api_transcribe(connect_d, retrieved_file_in_vid_dir_str);
+    printf("File exists returned value: %s\n", data_val_of_file);
+	} else {
+		// Returns the HTTP/1.1 400 Error Message
+		char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.'";
+		int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
+		if (send_400_error_code == DOES_NOT_EXIST) {
+			fprintf(stderr, "Error in sending\n");
+			exit(1);
+		}
+    }
+    return retrieved_file_in_vid_dir_str;
+}
+
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {     // argv[0]    argv[1]
@@ -156,16 +182,19 @@ int main(int argc, char* argv[]) {
                	int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
 
                 // Create the filename to send over the network
+                // filename_str returns {1234.mp4}
             	char filename_str[100];
             	char* left_brace = "{";
 				char* right_brace = "}";
             	strcat(filename_str, left_brace);
 				strcat(filename_str, final_filename_output);
 				strcat(filename_str, right_brace);
-				printf("File name: %s\n", filename_str);
 
 				// Execute the api transcribe method
-				api_transcribe(filename_str);
+    			char retrieved_file_in_vid_dir_str[100];
+                char* retrieved_file_in_vid_dir_str_result = transcribe_video_method(connect_d, final_filename_output, retrieved_file_in_vid_dir_str);
+
+               // api_transcribe(retrieved_file_in_vid_dir_str);
 
                 if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending\n");
