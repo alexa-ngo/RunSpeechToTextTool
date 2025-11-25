@@ -37,7 +37,7 @@ void child_process_handles_request(int listener_d, int connect_d, char* buf);
 char* data_longer_than_or_equal_to_key(int key_length, char* key_str, int data_length, char* data_str);
 int get_value_in_jstring(const char* jstring);
 void kill_the_process(void);
-char* make_final_filename(void);
+char* make_final_filename(char* either_mp4_or_wav);
 char* num_2_key_str(int num);
 int open_listener_socket(void);
 int read_in(int socket, char* buf, int len);

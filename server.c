@@ -27,6 +27,10 @@
         6. Send the transcription data back to the client {"data":"Hi there!"}
 */
 
+int run_bash_script() {
+    system("./run_bash_script.sh");
+    return 0;
+}
 
 // Input of the filename string: {1234.mp4}
 char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_str) {
@@ -55,6 +59,9 @@ char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_st
     // The value output is 1234.mp4
     json_object_object_get_ex(jdata, find_this_key, &object);
     char* value = json_object_get_string(object);
+
+	// Run the bash script
+	run_bash_script();
 
     return value;
 }
@@ -141,11 +148,26 @@ void kill_the_process(void) {
 }
 
 /* Build the final filename */
-char* make_final_filename(void) {
+char* make_final_filename(char* either_mp4_or_wav) {
 
     int file_name = (int)time(NULL);
     char* filename_str = num_2_key_str(file_name);
-    char* final_filename = strcat(filename_str, ".mp4");
+	char* wav = ".wav";
+	char* mp4 = ".mp4";
+	printf("show .wav: %s\n", wav);
+	printf("show .mp4: %s\n", mp4);
+	char* final_filename;
+	printf("hi\n");
+	final_filename = strcat(filename_str, ".mp4");
+
+	if (strcmp(either_mp4_or_wav, ".mp4") == 0) {
+		printf("It's .mp4");
+    	final_filename = strcat(filename_str, ".mp4");
+	} else if (strcmp(either_mp4_or_wav, ".wav") == 0) {
+		printf("It's .wav");
+		final_filename = strcat(filename_str, ".wav");
+	}
+	printf("This is final_filename: %s", final_filename);
     return final_filename;
 }
 

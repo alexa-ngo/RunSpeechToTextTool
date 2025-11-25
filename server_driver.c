@@ -58,6 +58,7 @@ char* transcribe_video_method(int connect_d, char* final_filename_output, char r
     return retrieved_file_in_vid_dir_str;
 }
 
+// Runs the server
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {     // argv[0]    argv[1]
@@ -171,7 +172,8 @@ int main(int argc, char* argv[]) {
 
 				// Builds the HTTP string
 				// Make the filename. Ex. 181892.mp4
-				char* final_filename_output = make_final_filename();
+				char* mp4 = "mp4";
+				char* final_filename_output = make_final_filename(mp4);
 
 				// Stream the data with connect_d
 				run_data_parser(connect_d, final_filename_output);
@@ -195,10 +197,12 @@ int main(int argc, char* argv[]) {
 				if (api_results != NULL) {
 					char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
 					int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
-                	if (send_200_ok == DOES_NOT_EXIST) {
+
+					if (send_200_ok == DOES_NOT_EXIST) {
                     	fprintf(stderr, "Error in 200 sending in send 200 OK\n");
                     	exit(1);
                 	}
+					printf("Run the transcription code\n");
 				} else {
 					// Send an 400 Error if the file file is not in the directory
 			    	char* built_http_ok_response = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n'";
@@ -208,7 +212,6 @@ int main(int argc, char* argv[]) {
                     	exit(1);
                 	}
 				}
-
 
             } else {
                 // Returns the HTTP/1.1 400 Error Message
