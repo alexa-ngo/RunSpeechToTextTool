@@ -150,25 +150,19 @@ void kill_the_process(void) {
 /* Build the final filename */
 char* make_final_filename(char* either_mp4_or_wav) {
 
-    int file_name = (int)time(NULL);
-    char* filename_str = num_2_key_str(file_name);
-	char* wav = ".wav";
-	char* mp4 = ".mp4";
-	printf("show .wav: %s\n", wav);
-	printf("show .mp4: %s\n", mp4);
-	char* final_filename;
-	printf("hi\n");
-	final_filename = strcat(filename_str, ".mp4");
+	// Make the filename using Year-Month-Date.wav
+    //int file_name = (int)time(NULL);
+    //char* filename_str = num_2_key_str(file_name);
+	// The transcription code will get the ./video_file.mp4 file and then make a timestamp with
+	// the .wav
+  	time_t now = time(NULL);         // Get current time
+  	struct tm *t = localtime(&now);  // Convert to local time structure
+	char* date_time_buffer = malloc(200 * 5);
 
-	if (strcmp(either_mp4_or_wav, ".mp4") == 0) {
-		printf("It's .mp4");
-    	final_filename = strcat(filename_str, ".mp4");
-	} else if (strcmp(either_mp4_or_wav, ".wav") == 0) {
-		printf("It's .wav");
-		final_filename = strcat(filename_str, ".wav");
-	}
-	printf("This is final_filename: %s", final_filename);
-    return final_filename;
+	strftime(date_time_buffer, 100, "%Y-%m-%d.wav", t);
+	printf("The date time: %s\n", date_time_buffer);
+
+	return date_time_buffer;
 }
 
 /* Converts an integer to a string */
