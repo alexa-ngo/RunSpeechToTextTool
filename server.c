@@ -137,6 +137,7 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
 
     // Result outputs: {"filename" : "1234.mp4"}
     results = http_OK_filename_str_official;
+	free(data_len_as_str);
     return results;
 }
 
@@ -265,5 +266,6 @@ void run_data_parser(int connect_d, char* final_filename_output) {
     for (int j = 0; j < uploaded_data_index; j++) {
         fputc(uploaded_data[j], output_file);
     }
+	free(uploaded_data); 		// One hundred million bytes
     fclose(output_file);
 }
