@@ -52,6 +52,7 @@ char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_st
 		printf(">> Result String: %s\n", result_str);
 		if (send_400_error_code == DOES_NOT_EXIST) {
 			fprintf(stderr, "Error in sending\n");
+			close(connect_d);
 			exit(1);
 		}
     }
@@ -62,6 +63,7 @@ char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_st
 
 	// Run the bash script
 	run_bash_script();
+	printf(">>> 65\n");
 
     return value;
 }
@@ -101,12 +103,12 @@ void bind_to_port(int socket, int port) {
 char* build_http_ok_response(char* final_filename_output, char* results) {
     // Build the HTTP OK filename string to send to the client.
     // The server returns 200 OK if the content is good data
-    char http_OK_filename_str_official[100000];
+    char http_OK_filename_str_official[100000] = "\0";
     char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
 
     // Use strcat to build the JSON string first by finding  the length of the JSON string
     //	and send the filename to the client, so the client can request for that file
-    char json_filename_str[100];
+    char json_filename_str[100] = "\0";
     char* left_brace = "{";
     char* right_brace = "}";
     strcat(json_filename_str, final_filename_output);
@@ -118,7 +120,7 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
     char* two_slash_n = "\n\n";
 
     // Build the data json; Ex. {"filename" : "12345.mp4"}
-    char data_content_bytes[100];
+    char data_content_bytes[100] = "\0";
     strcat(data_content_bytes, left_brace);
     strcat(data_content_bytes, file_label);
     strcat(data_content_bytes, quote);
@@ -134,13 +136,13 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
     strcat(http_OK_filename_str_official, data_len_as_str);
     strcat(http_OK_filename_str_official, two_slash_n);
     strcat(http_OK_filename_str_official, data_content_bytes);
+	strcat(http_OK_filename_str_official, "\0");
 
     // Result outputs: {"filename" : "1234.mp4"}
     results = http_OK_filename_str_official;
 	free(data_len_as_str);
     return results;
-}
-
+	}
 
 /* Kill the process */
 void kill_the_process(void) {
@@ -156,12 +158,19 @@ char* make_final_filename(char* either_mp4_or_wav) {
     //char* filename_str = num_2_key_str(file_name);
 	// The transcription code will get the ./video_file.mp4 file and then make a timestamp with
 	// the .wav
+
+	printf("BUILD THE COMMAND AND THEN RUN THE BASH SCRIPTTTTTTTTTTTTTTTTTTT\n");
+
   	time_t now = time(NULL);         // Get current time
   	struct tm *t = localtime(&now);  // Convert to local time structure
 	char* date_time_buffer = malloc(200 * 5);
 
 	strftime(date_time_buffer, 100, "%Y-%m-%d.wav", t);
 	printf("The date time: %s\n", date_time_buffer);
+	// alexa-script.sh
+	system("bash run_bash_script.sh");
+
+	printf("ran the bash script\n");
 
 	return date_time_buffer;
 }

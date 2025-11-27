@@ -2,7 +2,7 @@
 #define SERVER
 
 /*
-    This is the declaration of the server.
+    This is the function declarations of the server.
 */
 
 #include <arpa/inet.h>
@@ -23,6 +23,7 @@
 #define BYTES_OF_DATA_100000 100000
 #define DOES_NOT_EXIST -1
 #define FALSE 0
+#define IS_TRUE 0
 #define LETTER_OF_A 65
 #define MAX_5_NUM_OF_RUNNING_PROCESSES 5
 #define ONE_HUNDRED_MILLION 100000000
@@ -43,6 +44,6 @@ int open_listener_socket(void);
 int read_in(int socket, char* buf, int len);
 void run_data_parser(int connect_d, char* file_filename_output);
 int say(int socket, char* s);
-char* transtribe_video_method(int conenct_d, char* final_filename_output, char retrieved_file_in_vid_dir_str);
+char* transtribe_video_method(int conenct_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str);
 
 #endif
