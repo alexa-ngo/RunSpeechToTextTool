@@ -196,6 +196,7 @@ int main(int argc, char* argv[]) {
 				char* final_filename_output = make_final_filename(mp4);
 
 				// Stream the data with connect_d
+                printf("DEBUGGGG 199 there are 600 BYTES IN HERE THAT NEEDS TO BE FREED. ");
 				run_data_parser(connect_d, final_filename_output);
 
                 // Create the filename to send over the network

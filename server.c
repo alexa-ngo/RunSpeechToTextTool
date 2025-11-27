@@ -1,12 +1,12 @@
 #include "server.h"
 
 /*
-*      This is the code for the microservice for the Speech-To-Text Tool.
+*      This is the server code for the microservice for the Speech-To-Text Tool.
 */
 
 /*
     Method: /api/transcribe
-    Purpose: Client sends a JSON string to the server to retrieve the transcribed data.
+    Purpose: The client sends a JSON string to the server to retrieve the transcribed data.
                 The server sends the transcribed data back to the client.
     Input: JSON string
         {
@@ -21,9 +21,9 @@
     Workflow:
         1. Client sends a request {"filename":"1234.mp4"} to the server
         2. Server uses the JSON library to convert the JSON string into a JSON object
-        3. Retrieve the filename from the JSN object
+        3. The server retrieves the filename from the JSON object
         4. Use the filename to transcribe
-        5. Make the transcription file
+        5. Make the transcription file (2025-11-25.wav)
         6. Send the transcription data back to the client {"data":"Hi there!"}
 */
 
@@ -49,7 +49,6 @@ char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_st
 		// Returns the HTTP/1.1 400 Error Message
 		char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n";
 		int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
-		printf(">> Result String: %s\n", result_str);
 		if (send_400_error_code == DOES_NOT_EXIST) {
 			fprintf(stderr, "Error in sending\n");
 			close(connect_d);
@@ -153,23 +152,13 @@ void kill_the_process(void) {
 /* Build the final filename */
 char* make_final_filename(char* either_mp4_or_wav) {
 
-	// Make the filename using Year-Month-Date.wav
-    //int file_name = (int)time(NULL);
-    //char* filename_str = num_2_key_str(file_name);
-	// The transcription code will get the ./video_file.mp4 file and then make a timestamp with
-	// the .wav
-
-	printf("BUILD THE COMMAND AND THEN RUN THE BASH SCRIPTTTTTTTTTTTTTTTTTTT\n");
-
   	time_t now = time(NULL);         // Get current time
   	struct tm *t = localtime(&now);  // Convert to local time structure
 	char* date_time_buffer = malloc(200 * 5);
 
 	strftime(date_time_buffer, 100, "%Y-%m-%d.wav", t);
-	printf("The date time: %s\n", date_time_buffer);
 	// alexa-script.sh
 	system("bash run_bash_script.sh");
-
 	printf("ran the bash script\n");
 
 	return date_time_buffer;
