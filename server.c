@@ -61,8 +61,8 @@ char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_st
     char* value = json_object_get_string(object);
 
 	// Run the bash script
-	run_bash_script();
-	printf(">>> 65\n");
+	//run_bash_script();
+	printf("server.c run_bash_script >>> \n");
 
     return value;
 }
@@ -149,6 +149,21 @@ void kill_the_process(void) {
     exit(1);
 }
 
+
+/* Make a filename string with braces
+    Creates the filename to send over the network
+    Return: {1234.wav}
+*/
+char* make_filename_brace_str(char* final_filename_output, char* filename_str) {
+    char* left_brace = "{";
+	char* right_brace = "}";
+    strcat(filename_str, left_brace);
+    strcat(filename_str, final_filename_output);
+	strcat(filename_str, right_brace);
+    return filename_str;
+}
+
+
 /* Build the final filename */
 char* make_final_filename(char* either_mp4_or_wav) {
 
@@ -158,7 +173,7 @@ char* make_final_filename(char* either_mp4_or_wav) {
 
 	strftime(date_time_buffer, 100, "%Y-%m-%d.wav", t);
 	// alexa-script.sh
-	system("bash run_bash_script.sh");
+	//system("bash run_bash_script.sh");
 	printf("ran the bash script\n");
 
 	return date_time_buffer;
@@ -215,7 +230,8 @@ int read_in(int socket, char* buf, int len) {
     return len - slen;
 }
 
-/* Stream each byte */
+
+// Stream each byte of the media file
 void run_data_parser(int connect_d, char* final_filename_output) {
     /* Minimal Multipart Form Data Parser
        Parses out each byte of an audio/video file
@@ -266,4 +282,31 @@ void run_data_parser(int connect_d, char* final_filename_output) {
     }
 	free(uploaded_data); 		// One hundred million bytes
     fclose(output_file);
+}
+
+
+// Check if the video (XYZ.mp4) video exists in the videos directory
+char* transcribe_video_method(int connect_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str) {
+
+	// Make the video in ./videos/XYZ.mp4
+    char* video_path_str = "./videos/";
+    strcat(retrieved_file_in_vid_dir_str, video_path_str);
+    strcat(retrieved_file_in_vid_dir_str, final_filename_output);
+
+	// Check file exists
+    if (retrieved_file_in_vid_dir_str != NULL) {
+
+		// Get the value of the key caled "filename"
+		char* data_val_of_file = api_transcribe_get_value(connect_d, retrieved_file_in_vid_dir_str);
+    	printf("File exists returned value: %s\n", data_val_of_file);
+	} else {
+		// Returns the HTTP/1.1 400 Error Message
+		char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.'";
+		int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
+		if (send_400_error_code == DOES_NOT_EXIST) {
+			fprintf(stderr, "Error in sending\n");
+			exit(1);
+		}
+    }
+    return retrieved_file_in_vid_dir_str;
 }

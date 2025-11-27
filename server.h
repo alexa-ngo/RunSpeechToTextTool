@@ -40,12 +40,13 @@ char* data_longer_than_or_equal_to_key(int key_length, char* key_str, int data_l
 int get_value_in_jstring(const char* jstring);
 void handle_shutdown(int sig);
 void kill_the_process(void);
+char* make_filename_brace_str(char* final_filename_output, char* filename_str);
 char* make_final_filename(char* either_mp4_or_wav);
 char* num_2_key_str(int num);
 int open_listener_socket(void);
 int read_in(int socket, char* buf, int len);
 void run_data_parser(int connect_d, char* file_filename_output);
 int say(int socket, char* s);
-char* transtribe_video_method(int conenct_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str);
+char* transcribe_video_method(int conenct_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str);
 
 #endif
