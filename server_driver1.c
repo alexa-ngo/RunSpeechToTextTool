@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
 
     const char* port = argv[1];
     int port_num = atoi(port);
+    char buf[BYTES_OF_DATA_100000] = "\0";
 
     // Calls handle_shutdown() if CTRL-C is hit
     if (catch_signal(SIGINT, handle_shutdown) == DOES_NOT_EXIST) {
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]) {
 
     puts("Waiting for connection");
     struct sockaddr_storage client_addr;
-    unsligned int address_size = sizeof(client_address);
+    unsigned int address_size = sizeof(client_addr);
 
     // Loop throught the data
     /* Loop to accept data */
@@ -69,7 +70,19 @@ int main(int argc, char* argv[]) {
             exit(1);
         }
         if (child_pid  > 0) {
-            fprintf(stderr, "Parent is closing child socket. Child PID: %d\n\n", h);
+            fprintf(stderr, "Parent is closing child socket. Child PID: %d\n\n", child_pid);
+            //Parent is closing the CLIENT SOCKET
+            close(connect_d);
+        } else {
+            // This is the child process, so close the listener.
+            // The child process should handle the request.
+            close(listener_d);
 
+            // Clear the buffer first
+            memset(buf, '\0', BYTES_OF_DATA_100000);
+
+
+
+        }
     }
 }

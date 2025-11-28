@@ -21,7 +21,7 @@ void bind_to_port(int socket, int port) {
         fprintf(stderr, "Can't bind to socket");
         exit(1);
     }
-c}
+}
 
 // Create a streaming socket
 int open_listener_socket(void) {
