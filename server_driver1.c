@@ -134,35 +134,31 @@ int main(int argc, char* argv[]) {
             // POST request with /api/upload or /api/transcribe or /api/upload
             if ((str_cmp_post_result == TRUE && int_api_upload_buff_result == TRUE) ||
                  (str_cmp_post_result == TRUE && int_api_transcribe_buff_result == TRUE)) {
-				// Create filename. Ex unixtime.mp4
-                //char* wav = "wav";
-                //char* final_filename_output;
-                //final_filename_output = "1114";
+				// Create filename. Ex unixtime.mp4 -> 1764352279.wav
                 char* final_filename_output = create_wav_filename();
                 printf("Make final_filename: %s\n", final_filename_output);
 
 				// Stream the data with connect_d
 				//run_data_parser(connect_d, final_filename_output); // there are about 600 bytes in her
 
-
                 char filename_str[100] = "\0";
                 //filename_str = "1114";
                 char* filename_result = make_filename_brace_str(final_filename_output, filename_str);
-                printf(">>  158: filename_result: %s\n", filename_result);
+                printf(">>  158: filename_result: %s\n\n\ns", filename_result);
 
 				// Execute the api transcribe method
     			char retrieved_file_in_vid_dir_str[100] = "\0";
                 char* retrieved_file_in_vid_dir_str_result = transcribe_video_method(connect_d, final_filename_output, retrieved_file_in_vid_dir_str);
                	char* api_results = api_transcribe_get_value(connect_d, retrieved_file_in_vid_dir_str);
-                printf("\n 161 >> send this data to client: %s\n", retrieved_file_in_vid_dir_str);
-                printf("\n 162 >> send this filename to the client: %s\n", final_filename_output);
+                //printf("\n 161 >> send this data to client: %s\n", retrieved_file_in_vid_dir_str);
+                //printf("\n 162 >> send this filename to the client: %s\n", final_filename_output);
 				char* result;
                 printf(">> 164\n", api_results);
 				if (api_results != NULL) {
                      printf("\n 166 >> inside the api_results");
 
 					char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
-					printf("169 >> %s\n", built_http_ok_response);
+				//	printf("169 >> %s\n", built_http_ok_response);
                     /*
                     int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
                     printf("\n 166 >> send this data over: %s\n", built_http_ok_response);
@@ -173,10 +169,10 @@ int main(int argc, char* argv[]) {
                 	}
 					//free(final_filename_output);
 */
-                    printf("172\n");
+                  //  printf("172\n");
 
 				} else {
-                    printf("181 this is to send the 400 error\n");
+                    //printf("181 this is to send the 400 error\n");
 
 					// Send an 400 Error if the file file is not in the directory
 			    	//char* built_http_ok_response = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n'";

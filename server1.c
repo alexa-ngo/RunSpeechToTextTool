@@ -211,7 +211,7 @@ void run_data_parser(int connect_d, char* final_filename_output) {
 /* Converts an integer to a string */
 char* num_2_key_str(int num) {
     int idx = 0;
-    char* buffer = malloc(sizeof(char) * 7);		// just enough for 7 digits
+    char* buffer = malloc(sizeof(char) * 100);		// just enough for 55 digits
 
     int quotient = num;
     while (quotient > 0) {
@@ -231,31 +231,24 @@ char* num_2_key_str(int num) {
         buffer[i] = buffer[j];
         buffer[j] = t;
     }
-    buffer = "1114";
     return buffer;
 }
 
+
 /* Build the wav final filename */
 char* create_wav_filename() {
-
-    //time_t now = time(NULL);         // Get current time
-    //struct tm *t = localtime(&now);  // Convert to local time structure
-    //char* date_time_buffer = malloc(200 * 5);
 
     // alexa-script.sh
     //system("bash run_bash_script.sh");
     printf("ran the bash script\n");
 
     int now = time(NULL);
+    char* now_str = num_2_key_str(now);
     char* wav = ".wav";
 
-    char* UNIX_time_str_filename = "\0";
-    UNIX_time_str_filename = "1114";
-    char* unix_str = num_2_key_str(now);
-    printf("now: %s\n", unix_str);
-    //char* UNIX_time_str_filename = num_2_key_str(now);
-   // strcat(UNIX_time_str_filename, wav);
-   // printf("This is the unix time: %s\n", UNIX_time_str_filename);
+    char* UNIX_time_str_filename = malloc(200);
+    strcat(UNIX_time_str_filename, now_str);
+    strcat(UNIX_time_str_filename, wav);
     return UNIX_time_str_filename;
 }
 

@@ -40,7 +40,7 @@ int catch_signal(int sig, void (*handle)(int));
 //int get_value_in_jstring(const char* jstring);
 //void handle_shutdown(int sig);
 //void kill_the_process(void);
-char* itoa(int now);
+char* itoa(int now  );
 char* make_filename_brace_str(char* final_filename_output, char* filename_str);
 char* create_wav_filename();
 char* num_2_key_str(int num);
