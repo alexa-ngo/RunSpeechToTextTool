@@ -177,7 +177,7 @@ int main(int argc, char* argv[]) {
                 	}
 					free(final_filename_output);
 				} else {
-					// Send an 400 Error if the file file is not in the directory
+					// Send an 400 Error if thes file is not in the directory
 			    	char* built_http_ok_response = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n'";
 				    int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
                 	if (send_200_ok == DOES_NOT_EXIST) {

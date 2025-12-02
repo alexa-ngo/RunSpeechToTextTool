@@ -1,4 +1,4 @@
-#include "server1.h"
+#include "server.h"
 
 // The client saves the filename in a JSON object, and the server checks to see
 // if the .wav file exists.

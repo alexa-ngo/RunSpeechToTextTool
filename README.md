@@ -9,13 +9,14 @@ ________________________________________________
 
 ## How to REQUEST Data
 
-Since this program is not requesting data, rather, it is posting data using
+### Upload Media File
+The first step is for the client to upload a media file using the POST request.
 
 HTTP Method: POST
 
 URL: http://localhost:8001/api/upload
 
-Required Header: Accept:application/json
+Required Header: Accept: application
 Example Request (cURL):
 
 curl -X POST -H 'Content-Type: video/mp4' -F "bob=@/home/ango/Downloads/Dream.mp4" http://localhost:1234/api/upload
@@ -26,17 +27,22 @@ ___________________________________________________
 
 Expected Successful JSON Response (HTTP 200):
 
-{"transcribe": "transcription summarized notes"}
+Sent from Server to Client:
+{"Filename" : "123-UNIX-TIME.wav"}
+
+For Transcription Part:
+{"data" : "transcription summarized notes"}
 
 ____________________________________________________
 
 ## Required RESPONSE Format
 
-|      Field     |   Type   |             Description               |
-| -------------- | -------- | ------------------------------------- |
-| transcription  |  String  | Transcribed data from the media file  |
-
-_____________________________________________________
+| Field          | Type    | Description                          |
+|----------------|---------|--------------------------------------|
+| upload         | String  | Filename of the UNIX time            |
+| -------------- | ------- | ----------------------------------   |
+| transcription  | String  | Transcribed data from the media file |
+___________________________________________________________________
 
 ## UML Sequence Diagram
 
@@ -65,13 +71,13 @@ ffplay -f f32le -ar 44100 z-audio
 3. Convert the audio file to a .wav file.
 Have the wav file follow the command in order to be used with Whisper
 ```
-ffmpeg -f f32le 16000 -ac 2 -i z-audio z-audio-output.wav
+ffmpeg -f f32le 16000 -ac 2 -i your_input.wav z-audio-output.wav
 ```
 Then go to the directory where Whisper is at to run! 
 
-## 2. Input a .wav file to be Transcribed by Whisper
+## 2. Input a .wav file to be Transcribed by Whisper.cpp
 
-Follow these Whisper instructions: https://github.com/ggml-org/whisper.cpp?tab=readme-ov-file
+Follow these Whisper.cpp instructions: https://github.com/ggml-org/whisper.cpp?tab=readme-ov-file
 
 - Install Whisper from GitHub with the ggml-format. Now git clone the repo, cmake, etc.
   https://github.com/ggml-org/whisper.cpp#ggml-format
@@ -84,7 +90,7 @@ Follow these Whisper instructions: https://github.com/ggml-org/whisper.cpp?tab=r
 ./build/bin/whisper-cli -f $HOME/Downloads/MLKDream.wav
 
 // Another example to output a transcription file using .txt:
-/home/Riley_Lee/Code/whisper.cpp/build/bin/whisper-cli /home/whisper/cpp/models/ggml-base.en.bin -f path_of_wav_file > time_stamp.txt
+/home/Riley_Lee/Code/whisper.cpp/build/bin/whisper-cli /home/Riley_Lee/whisper.cpp/models/ggml-medium.en.bin -f path_of_wav_file > time_stamp.txt
 
 ```
 
