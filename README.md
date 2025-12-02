@@ -16,7 +16,7 @@ HTTP Method: POST
 
 URL: http://localhost:8001/api/upload
 
-Required Header: Accept: application
+Required Header: Accept: video/mp4  
 Example Request (cURL):
 
 curl -X POST -H 'Content-Type: video/mp4' -F "bob=@/home/ango/Downloads/Dream.mp4" http://localhost:1234/api/upload
@@ -61,18 +61,21 @@ We first have to demultiplex the media input file to a slower rate.
 1. Compile the demux_decode program to separate the video and the audio file.
 ```
 gcc demux_decode.c -I /usr/include/ffmpeg -lavcodec -lavutil -lavformat -o demux_decode
-./demux_decode your_input.wav z-audio
+./demux_decode your_input.wav z-audio  
 ```
+^ The Dream.mp4 above works that is in the same file directory. 
+
 2. Play the z-audio file to ensure it works
 ```
 ffplay -f f32le -ar 44100 z-audio
 ```
 3. Convert the audio file to a .wav file.
-Have the wav file follow the command in order to be used with Whisper
+Have the wav file follow the command required by Whisper. The purpose is to slow down the
+rate of sound.
 ```
 ffmpeg -f f32le 16000 -ac 2 -i your_input.wav z-audio-output.wav
 ```
-Then go to the directory where Whisper is at to run! 
+Then go to the directory where Whisper is installed at to run! 
 
 ## 2. Input a .wav file to be Transcribed by Whisper.cpp
 
@@ -89,8 +92,18 @@ Follow these Whisper.cpp instructions: https://github.com/ggml-org/whisper.cpp?t
 ./build/bin/whisper-cli -f $HOME/Downloads/MLKDream.wav
 
 // Another example to output a transcription file using .txt:
-/home/Riley_Lee/Code/whisper.cpp/build/bin/whisper-cli /home/Riley_Lee/whisper.cpp/models/ggml-medium.en.bin -f path_of_wav_file > time_stamp.txt
+/home/Riley_Lee/Code/whisper.cpp/build/bin/whisper-cli /home/Riley_Lee/whisper.cpp/models/ggml-medium.en.bin -f path_of_wav_file(this is the z-audio-output.wav) > time_stamp.txt
+```
+1. Have the client sent the correct path of the .mp4 file to be transcribed. I might not need to use the
+arguments in ./demux_decode, but try it out
+```
+ffmpeg -f f32le 16000 -ac 2 -i your_input.wav z-audio-output.wav
+```
+2. First access the z-audio-output.wav to be transcribed! 
+3. The z-audio-output.wav file should be created in the /videos directory
 
+```
+./build/bin/whisper-cli -f ./models/ggml-medium.en.bin -f ../z-audio-output.wav
 ```
 
 ## 3. Minimal Multipart Form Data Parser-c
