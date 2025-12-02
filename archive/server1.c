@@ -1,24 +1,21 @@
-#include "server.h"
+#include "server1.h"
 
-// The client saves the filename in a JSON object, and the server checks to see
-// if the .wav file exists.
-// The server returns the value of the filename key.
-//
-// Input:
-//      filename_and_path_in_vid_dir: ./videos/XYZ.wav
-char* api_transcribe_get_value(int connect_d, char* filename_and_path_in_vid_dir) {
+// Input of the filename string: {1234.mp4}
+char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_str) {
 
-    printf("File path: %s\n", filename_and_path_in_vid_dir);
+    printf("File path: %s\n", retrieved_file_in_vid_dir_str);
 
-    // Program returns the value of the filename key
+    // Make the input_json_str as a JSON object with the JSON-C library
+    char filename[] = "./videos/18.txt";
+
     char find_this_key[] = "filename";
     json_object *jdata, *object;
 
-    jdata = json_object_from_file(filename_and_path_in_vid_dir);
+    jdata = json_object_from_file(filename);
     if (jdata == NULL) {
         fprintf(stderr, "Unable to process %s\n", find_this_key);
         // Returns the HTTP/1.1 400 Error Message
-        char* api_transcribe_400 = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n";
+        char* api_transcribe_400 = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 401 ERROR.\n";
         int send_400_error_code = send(connect_d, api_transcribe_400, strlen(api_transcribe_400), 0);
         if (send_400_error_code == DOES_NOT_EXIST) {
             fprintf(stderr, "Error in sending\n");
@@ -27,13 +24,9 @@ char* api_transcribe_get_value(int connect_d, char* filename_and_path_in_vid_dir
         }
     }
 
-    // Execute a Bash script to transcribe the .wav file with the Whisper arguments
-    // The Bash script will ask for user input of the file they want to transcribe and the output name.
-
     // The value output is 1234.mp4
     json_object_object_get_ex(jdata, find_this_key, &object);
     char* value = json_object_get_string(object);
-    printf("32: the value: %s\n", value);
 
     // Run the bash script
     //run_bash_script();
@@ -65,18 +58,19 @@ void bind_to_port(int socket, int port) {
     }
 }
 
-char* build_http_ok_response(char* unix_filename, char* results) {
+
+char* build_http_ok_response(char* final_filename_output, char* results) {
     // Build the HTTP OK filename string to send to the client.
     // The server returns 200 OK if the content is good data
     char http_OK_filename_str_official[100000] = "\0";
     char* http_OK_filename_str = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: ";
 
-    // Use strcat to build the JSON string first by finding the length of the JSON string
+    // Use strcat to build the JSON string first by finding  the length of the JSON string
     //	and send the filename to the client, so the client can request for that file
     char json_filename_str[100] = "\0";
     char* left_brace = "{";
     char* right_brace = "}";
-    strcat(json_filename_str, unix_filename);
+    strcat(json_filename_str, final_filename_output);
 
     // Build the official filename string
     char* file_label = "\"filename\" : ";
@@ -94,7 +88,6 @@ char* build_http_ok_response(char* unix_filename, char* results) {
     strcat(data_content_bytes, right_brace);
     strcat(data_content_bytes, two_slash_n);
     strcat(data_content_bytes, null_char);
-    printf("90 >> %s\n", data_content_bytes);
 
     strcat(http_OK_filename_str_official, http_OK_filename_str);
     int data_len = strlen(data_content_bytes);
@@ -102,7 +95,7 @@ char* build_http_ok_response(char* unix_filename, char* results) {
     strcat(http_OK_filename_str_official, data_len_as_str);
     strcat(http_OK_filename_str_official, two_slash_n);
     strcat(http_OK_filename_str_official, data_content_bytes);
-   // strcat(http_OK_filename_str_official, '\0');
+    strcat(http_OK_filename_str_official, "\0");
 
     // Result outputs: {"filename" : "1234.mp4"}
     results = http_OK_filename_str_official;
@@ -121,29 +114,29 @@ int open_listener_socket(void) {
 }
 
 // Check if the video (XYZ.mp4) video exists in the videos directory
-void transcribe_video_method(int connect_d, char* transcribe_file_path_from_user, char* retrieved_file_in_vid_dir_str) {
+char* transcribe_video_method(int connect_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str) {
 
-    printf("126 Retrieved_file_in_vid_dir_str: %s\n", retrieved_file_in_vid_dir_str);
-    // Make the video in ./videos/XYZ.wav
+    // Make the video in ./videos/XYZ.mp4
     char* video_path_str = "./videos/";
     strcat(retrieved_file_in_vid_dir_str, video_path_str);
-    strcat(retrieved_file_in_vid_dir_str, transcribe_file_path_from_user);
+    strcat(retrieved_file_in_vid_dir_str, final_filename_output);
 
     // Check file exists
-    if (retrieved_file_in_vid_dir_str) {
-        // Get the value of the key called "filename"
+    if (retrieved_file_in_vid_dir_str != NULL) {
+
+        // Get the value of the key caled "filename"
         char* data_val_of_file = api_transcribe_get_value(connect_d, retrieved_file_in_vid_dir_str);
-        printf("File exists returned value: %s\n\n", data_val_of_file);
+        printf("File exists returned value: %s\n", data_val_of_file);
     } else {
-        // If file doesn't exist, return a 400 Error message
-        char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 888 ERROR.'";
+        // Returns the HTTP/1.1 400 Error Message
+        char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.'";
         int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
         if (send_400_error_code == DOES_NOT_EXIST) {
             fprintf(stderr, "Error in sending\n");
             exit(1);
         }
     }
- //   return retrieved_file_in_vid_dir_str;
+    return retrieved_file_in_vid_dir_str;
 }
 
 /* Make a filename string with braces
@@ -158,6 +151,7 @@ char* make_filename_brace_str(char* final_filename_output, char* filename_str) {
     strcat(filename_str, right_brace);
     return filename_str;
 }
+
 
 // Stream each byte of the media file
 void run_data_parser(int connect_d, char* final_filename_output) {
@@ -212,6 +206,8 @@ void run_data_parser(int connect_d, char* final_filename_output) {
     fclose(output_file);
 }
 
+
+
 /* Converts an integer to a string */
 char* num_2_key_str(int num) {
     int idx = 0;
@@ -238,8 +234,9 @@ char* num_2_key_str(int num) {
     return buffer;
 }
 
+
 /* Build the wav final filename */
-char* create_wav_filename(void) {
+char* create_wav_filename() {
 
     // alexa-script.sh
     //system("bash run_bash_script.sh");
@@ -249,7 +246,7 @@ char* create_wav_filename(void) {
     char* now_str = num_2_key_str(now);
     char* wav = ".wav";
 
-    char* UNIX_time_str_filename = malloc(100);
+    char* UNIX_time_str_filename = malloc(200);
     strcat(UNIX_time_str_filename, now_str);
     strcat(UNIX_time_str_filename, wav);
     return UNIX_time_str_filename;
