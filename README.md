@@ -40,7 +40,7 @@ _____________________________________________________
 
 ## UML Sequence Diagram
 
-![alt text](UMLsequenceDiagram.png)
+![alt text](UMLdiagram.png)
 
 _____________________________________________________
 ## Limitations
