@@ -1,41 +1,9 @@
-#include "server.h"
-
-/*
-*      This is the server code for the microservice for the Speech-To-Text Tool.
-*/
-
-/*
-    Method: /api/transcribe
-    Purpose: The client sends a JSON string to the server to retrieve the transcribed data.
-                The server sends the transcribed data back to the client.
-    Input: JSON string
-        {
-            "filename" : "1234.mp4"
-        }
-
-    Output: Transcribed data sent from the server back to the client
-        {
-            "data" : "Hi there!"
-        }
-
-    Workflow:
-        1. Client sends a request {"filename":"1234.mp4"} to the server
-        2. Server uses the JSON library to convert the JSON string into a JSON object
-        3. The server retrieves the filename from the JSON object
-        4. Use the filename to transcribe
-        5. Make the transcription file (2025-11-25.wav)
-        6. Send the transcription data back to the client {"data":"Hi there!"}
-*/
-
-int run_bash_script() {
-    system("./run_bash_script.sh");
-    return 0;
-}
+#include "server1.h"
 
 // Input of the filename string: {1234.mp4}
 char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_str) {
 
-	printf("File path: %s\n", retrieved_file_in_vid_dir_str);
+    printf("File path: %s\n", retrieved_file_in_vid_dir_str);
 
     // Make the input_json_str as a JSON object with the JSON-C library
     char filename[] = "./videos/18.txt";
@@ -46,58 +14,50 @@ char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_st
     jdata = json_object_from_file(filename);
     if (jdata == NULL) {
         fprintf(stderr, "Unable to process %s\n", find_this_key);
-		// Returns the HTTP/1.1 400 Error Message
-		char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n";
-		int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
-		if (send_400_error_code == DOES_NOT_EXIST) {
-			fprintf(stderr, "Error in sending\n");
-			close(connect_d);
-			exit(1);
-		}
+        // Returns the HTTP/1.1 400 Error Message
+        char* api_transcribe_400 = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 401 ERROR.\n";
+        int send_400_error_code = send(connect_d, api_transcribe_400, strlen(api_transcribe_400), 0);
+        if (send_400_error_code == DOES_NOT_EXIST) {
+            fprintf(stderr, "Error in sending\n");
+            close(connect_d);
+            exit(1);
+        }
     }
 
     // The value output is 1234.mp4
     json_object_object_get_ex(jdata, find_this_key, &object);
     char* value = json_object_get_string(object);
 
-	// Run the bash script
-	run_bash_script();
-	printf(">>> 65\n");
+    // Run the bash script
+    //run_bash_script();
+    printf("server.c run_bash_script >>> \n");
 
     return value;
 }
 
-/* Create a streaming socket */
-int open_listener_socket(void) {
-    int streaming_socket = socket(PF_INET, SOCK_STREAM, 0);
-    if (streaming_socket == -1        ) {
-        fprintf(stderr, "Can't open the socket");
-        exit(1);
-    }
-    return streaming_socket;
-}
 
-/* Bind to a port */
+// Bind to a port
 void bind_to_port(int socket, int port) {
     struct sockaddr_in the_socket;
     the_socket.sin_family = PF_INET;
     the_socket.sin_port = (in_port_t)htons(port);
     the_socket.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    /* Reuse the socket to restart the server without a problem */
+    // Reuse the socket to restart the server without a problem
     int reuse = 1;
     if (setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int)) == -1) {
         fprintf(stderr, "Can't set the reuse option on the socket");
         exit(1);
     }
 
-    /* Bind to a socket */
+    // Bind to a socket
     int c = bind(socket, (struct sockaddr *) &the_socket, sizeof(the_socket));
     if (c == -1) {
         fprintf(stderr, "Can't bind to socket");
         exit(1);
     }
 }
+
 
 char* build_http_ok_response(char* final_filename_output, char* results) {
     // Build the HTTP OK filename string to send to the client.
@@ -135,87 +95,65 @@ char* build_http_ok_response(char* final_filename_output, char* results) {
     strcat(http_OK_filename_str_official, data_len_as_str);
     strcat(http_OK_filename_str_official, two_slash_n);
     strcat(http_OK_filename_str_official, data_content_bytes);
-	strcat(http_OK_filename_str_official, "\0");
+    strcat(http_OK_filename_str_official, "\0");
 
     // Result outputs: {"filename" : "1234.mp4"}
     results = http_OK_filename_str_official;
-	free(data_len_as_str);
+    free(data_len_as_str);
     return results;
-	}
-
-/* Kill the process */
-void kill_the_process(void) {
-    fprintf(stderr, "Goodbye, I am ending this process now...\n");
-    exit(1);
 }
 
-/* Build the final filename */
-char* make_final_filename(char* either_mp4_or_wav) {
-
-  	time_t now = time(NULL);         // Get current time
-  	struct tm *t = localtime(&now);  // Convert to local time structure
-	char* date_time_buffer = malloc(200 * 5);
-
-	strftime(date_time_buffer, 100, "%Y-%m-%d.wav", t);
-	// alexa-script.sh
-	system("bash run_bash_script.sh");
-	printf("ran the bash script\n");
-
-	return date_time_buffer;
+// Create a streaming socket
+int open_listener_socket(void) {
+    int streaming_socket = socket(PF_INET, SOCK_STREAM, 0);
+    if (streaming_socket == -1){
+        fprintf(stderr, "Can't open the socket");
+        exit(1);
+    }
+    return streaming_socket;
 }
 
-/* Converts an integer to a string */
-char* num_2_key_str(int num) {
-    int idx = 0;
-    char* buffer = malloc(sizeof(char) * 7);		// just enough for 7 digits
+// Check if the video (XYZ.mp4) video exists in the videos directory
+char* transcribe_video_method(int connect_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str) {
 
-    int quotient = num;
-    while (quotient > 0) {
-        int digit = quotient % 10;
+    // Make the video in ./videos/XYZ.mp4
+    char* video_path_str = "./videos/";
+    strcat(retrieved_file_in_vid_dir_str, video_path_str);
+    strcat(retrieved_file_in_vid_dir_str, final_filename_output);
 
-        char v = '0' + digit;
-        buffer[idx] = v;
-        idx++;
-        quotient = quotient / 10;
-    }
-    buffer[idx] = '\0';		// don't forget the null terminating character
+    // Check file exists
+    if (retrieved_file_in_vid_dir_str != NULL) {
 
-    // Reverse the string because the "number" is now backwards.
-    int buffer_length = idx;
-    for (int i = 0, j = buffer_length -1; i < j; i++, j--) {
-        char t = buffer[i];
-        buffer[i] = buffer[j];
-        buffer[j] = t;
-    }
-    return buffer;
-}
-
-/* Receive the data from a socket */
-int read_in(int socket, char* buf, int len) {
-
-    char* buffer = buf;
-    int slen = len;
-
-    /* Must receive at least once to start the while loop */
-    int received_data = recv(socket, buffer, slen, 0);
-    while ((received_data > 0) && (buffer[received_data-1] != '\n')) {
-        buffer += received_data;
-        slen -= received_data;
-        received_data = recv(socket, buffer, slen, 0);
-    }
-
-    if (received_data < 0) {
-        return received_data;
-        // Send back an empty string if there is an empty string
-    } else if (received_data == 0) {
-        buf[0] = '\0';
+        // Get the value of the key caled "filename"
+        char* data_val_of_file = api_transcribe_get_value(connect_d, retrieved_file_in_vid_dir_str);
+        printf("File exists returned value: %s\n", data_val_of_file);
     } else {
-        buffer[received_data - 1] = '\0';
+        // Returns the HTTP/1.1 400 Error Message
+        char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.'";
+        int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
+        if (send_400_error_code == DOES_NOT_EXIST) {
+            fprintf(stderr, "Error in sending\n");
+            exit(1);
+        }
     }
-    return len - slen;
+    return retrieved_file_in_vid_dir_str;
 }
 
-/* Stream each byte */
+/* Make a filename string with braces
+    Creates the filename to send over the network
+    Return: {1234.wav}
+*/
+char* make_filename_brace_str(char* final_filename_output, char* filename_str) {
+    char* left_brace = "{";
+    char* right_brace = "}";
+    strcat(filename_str, left_brace);
+    strcat(filename_str, final_filename_output);
+    strcat(filename_str, right_brace);
+    return filename_str;
+}
+
+
+// Stream each byte of the media file
 void run_data_parser(int connect_d, char* final_filename_output) {
     /* Minimal Multipart Form Data Parser
        Parses out each byte of an audio/video file
@@ -264,6 +202,56 @@ void run_data_parser(int connect_d, char* final_filename_output) {
     for (int j = 0; j < uploaded_data_index; j++) {
         fputc(uploaded_data[j], output_file);
     }
-	free(uploaded_data); 		// One hundred million bytes
+    free(uploaded_data); 		// One hundred million bytes
     fclose(output_file);
 }
+
+
+
+/* Converts an integer to a string */
+char* num_2_key_str(int num) {
+    int idx = 0;
+    char* buffer = malloc(sizeof(char) * 100);		// just enough for 55 digits
+
+    int quotient = num;
+    while (quotient > 0) {
+        int digit = quotient % 10;
+
+        char v = '0' + digit;
+        buffer[idx] = v;
+        idx++;
+        quotient = quotient / 10;
+    }
+    buffer[idx] = '\0';		// don't forget the null terminating character
+
+    // Reverse the string because the "number" is now backwards.
+    int buffer_length = idx;
+    for (int i = 0, j = buffer_length -1; i < j; i++, j--) {
+        char t = buffer[i];
+        buffer[i] = buffer[j];
+        buffer[j] = t;
+    }
+    return buffer;
+}
+
+
+/* Build the wav final filename */
+char* create_wav_filename() {
+
+    // alexa-script.sh
+    //system("bash run_bash_script.sh");
+    printf("ran the bash script\n");
+
+    int now = time(NULL);
+    char* now_str = num_2_key_str(now);
+    char* wav = ".wav";
+
+    char* UNIX_time_str_filename = malloc(200);
+    strcat(UNIX_time_str_filename, now_str);
+    strcat(UNIX_time_str_filename, wav);
+    return UNIX_time_str_filename;
+}
+
+
+
+

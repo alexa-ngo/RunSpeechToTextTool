@@ -23,6 +23,7 @@
 #define BYTES_OF_DATA_100000 100000
 #define DOES_NOT_EXIST -1
 #define FALSE 0
+#define IS_FALSE 1
 #define IS_TRUE 0
 #define LETTER_OF_A 65
 #define MAX_5_NUM_OF_RUNNING_PROCESSES 5
@@ -35,19 +36,21 @@ char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_st
 void bind_to_port(int socket, int port);
 char* build_http_ok_response(char* final_filename_output, char* results);
 int catch_signal(int sig, void (*handle)(int));
+char* create_UNIX_brace_filename(void);
 //void child_process_handles_request(int listener_d, int connect_d, char* buf);
 //char* data_longer_than_or_equal_to_key(int key_length, char* key_str, int data_length, char* data_str);
 //int get_value_in_jstring(const char* jstring);
 //void handle_shutdown(int sig);
 //void kill_the_process(void);
-char* itoa(int now  );
+int is_post(int connect_d, char* api_buffer);
+char* itoa(int now);
 char* make_filename_brace_str(char* final_filename_output, char* filename_str);
 char* create_wav_filename();
 char* num_2_key_str(int num);
 int open_listener_socket(void);
 //int read_in(int socket, char* buf, int len);
-//void run_data_parser(int connect_d, char* file_filename_output);
+void run_data_parser(int connect_d, char* file_filename_output);
 //int say(int socket, char* s);
-char* transcribe_video_method(int conenct_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str);
+void transcribe_video_method(int conenct_d, char* final_filename_output, char* retrieved_file_in_vid_dir_str);
 
 #endif

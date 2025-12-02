@@ -1,30 +1,20 @@
-#include "server.h"
+#include "server1.h"
 
-/*
-    The Speech-to-Text tool summarizes an audio file and outputs that into a text file. This
-    is a server that reads in data from a client
-
-        1. convert a mp4 file into a .wav file
-               Usage: gcc -ljson-c server_driver.c server.c minimal_multi_parser.c -o the_program
-                      ./the_program <port_num>
-                      ./the_program 1234
- */
-
-/* Global variable declared in main */
+// Global variable declared in main
 int listener_d;
 
-/* Catch the signal handle */
+// Catch the signal handle
 int catch_signal(int sig, void (*handler)(int)) {
 
     struct sigaction action;
     action.sa_handler = handler;
-    /* Use an empty mask */
+    // Use an empty mask
     sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
-    return sigaction (sig, &action, NULL);
+    return sigaction(sig, &action, NULL);
 }
 
-/* Handles the shutdown process */
+// Handles the shutdown process
 void handle_shutdown(int sig) {
     if (listener_d) {
         close(listener_d);
@@ -33,12 +23,11 @@ void handle_shutdown(int sig) {
     exit(0);
 }
 
-
-// Runs the server
+// Run the server
 int main(int argc, char* argv[]) {
 
-    if (argc < 2) {     // argv[0]    argv[1]
-        printf("Usage: <program_name> <port>\n");
+    if (argc < 2) {    // argv[0]     argv[1]
+        printf("Usage: <program_name> <port>");
         exit(1);
     }
 
@@ -46,13 +35,13 @@ int main(int argc, char* argv[]) {
     int port_num = atoi(port);
     char buf[BYTES_OF_DATA_100000] = "\0";
 
-    /* Calls handle_shutdown() if CTRL-C is hit */
+    // Calls handle_shutdown() if CTRL-C is hit
     if (catch_signal(SIGINT, handle_shutdown) == DOES_NOT_EXIST) {
-        fprintf(stderr, "Can't set the interrupt handler");
+        fprintf(stderr, "Can't see the interrupt handler");
         exit(1);
     }
 
-    /* Listen and bind to a port */
+    // Listen and bind to a port
     int listener_d = open_listener_socket();
     bind_to_port(listener_d, port_num);
     if (listen(listener_d, MAX_5_NUM_OF_RUNNING_PROCESSES) == DOES_NOT_EXIST) {
@@ -64,35 +53,34 @@ int main(int argc, char* argv[]) {
     struct sockaddr_storage client_addr;
     unsigned int address_size = sizeof(client_addr);
 
-    /* Loop to accept data */
+    // Loop throught the data
     while (1) {
         int connect_d = accept(listener_d, (struct sockaddr *)&client_addr, &address_size);
         if (connect_d == -1) {
             fprintf(stderr, "Can't open secondary socket using the accept method\n");
             close(connect_d);
         }
-
+        // Fork the child process
         int child_pid = fork();
         if (child_pid == -1) {
             fprintf(stderr, "Could not fork the child\n");
-			close(connect_d);
+            close(connect_d);
             exit(1);
         }
-        if (child_pid > 0) {
+        if (child_pid  > 0) {
             fprintf(stderr, "Parent is closing child socket. Child PID: %d\n\n", child_pid);
-            /* Parent is closing the CLIENT SOCKET */
+            //Parent is closing the CLIENT SOCKET
             close(connect_d);
-			exit(1);
         } else {
-			/* This is the child Process */
-            /* Close the listener.
-            The process is a child process and should handle the request */
+            // This is the child process, so close the listener.
             close(listener_d);
 
-            /* Clear the buffer first */
+            // Clear the buffer first
             memset(buf, '\0', BYTES_OF_DATA_100000);
 
-            /* Read the client's message from the socket */
+            // Read the client's message from the socket
+            // Ex: POST /api/upload HTTP/1.1 along with User-Agent: curl/8.15.0
+            //        and other metadata such as Context-Length, Content-Type
             int chars_read = recv(connect_d, buf, BYTES_OF_DATA_100000, 0);
             if (chars_read == 0) {
                 fprintf(stderr, "Error in receiving\n");
@@ -105,7 +93,7 @@ int main(int argc, char* argv[]) {
                 exit(1);
             }
 
-			// API buffer to check if /api/upload or /api/transcribe
+            // Builds the API buffer of either /api/upload or /api/transcribe
             char api_buffer[BYTES_OF_DATA_30] = "\0";
             int api_buffer_idx = 0;
             int idx = 0;
@@ -131,79 +119,92 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            // Places /api/XYZ into the API buffer;
-            // XYZ can be either to upload or transcribe
+            // Places /api/XYZ into the API buffer which can be either upload or transcribe
             while (buf[first_idx] != ' ') {
                 api_buffer[api_buffer_idx] = buf[first_idx];
                 api_buffer_idx++;
                 first_idx++;
             }
 
-
             // Check if the request is a POST, and if the api is /api/upload or /api/transcribe
 			int str_cmp_post_result = (strcmp(post_request_buffer, "POST") == IS_TRUE);
 			int int_api_upload_buff_result = (strcmp(api_buffer, "/api/upload") == IS_TRUE);
 			int int_api_transcribe_buff_result = (strcmp(api_buffer, "/api/transcribe") == IS_TRUE);
 
-            // Check if the request from the client is a POST request with /api/upload or /api/transcribe
+            // POST request with /api/upload or /api/transcribe or /api/upload
             if ((str_cmp_post_result == TRUE && int_api_upload_buff_result == TRUE) ||
                  (str_cmp_post_result == TRUE && int_api_transcribe_buff_result == TRUE)) {
-				// Builds the HTTP string
-				// Make the filename. Ex. 181892.mp4
-                char* wav = "wav";
-				char* final_filename_output = make_final_filename(wav);
+				// Create filename. Ex unixtime.mp4 -> 1764352279.wav
+                char* final_filename_output = create_wav_filename();
+                printf("Make final_filename: %s\n", final_filename_output);
 
 				// Stream the data with connect_d
-				run_data_parser(connect_d, final_filename_output); // there are about 600 bytes in her
+				//run_data_parser(connect_d, final_filename_output); // there are about 600 bytes in her
 
-                char filename_str[100];
+                char filename_str[100] = "\0";
+                //filename_str = "1114";
                 char* filename_result = make_filename_brace_str(final_filename_output, filename_str);
-                printf(">>  158: filename_result: %s\n", filename_result);
+                printf(">>  158: filename_result: %s\n\n\ns", filename_result);
 
 				// Execute the api transcribe method
     			char retrieved_file_in_vid_dir_str[100] = "\0";
                 char* retrieved_file_in_vid_dir_str_result = transcribe_video_method(connect_d, final_filename_output, retrieved_file_in_vid_dir_str);
                	char* api_results = api_transcribe_get_value(connect_d, retrieved_file_in_vid_dir_str);
-
+                //printf("\n 161 >> send this data to client: %s\n", retrieved_file_in_vid_dir_str);
+                //printf("\n 162 >> send this filename to the client: %s\n", final_filename_output);
 				char* result;
+                printf(">> 164\n", api_results);
 				if (api_results != NULL) {
-					char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
-					int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
+                     printf("\n 166 >> inside the api_results");
 
+					char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
+				//	printf("169 >> %s\n", built_http_ok_response);
+                    /*
+                    int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
+                    printf("\n 166 >> send this data over: %s\n", built_http_ok_response);
 					if (send_200_ok == DOES_NOT_EXIST) {
                     	fprintf(stderr, "Error in 200 sending in send 200 OK\n");
-						free(final_filename_output);
+						//free(final_filename_output);
                     	exit(1);
                 	}
-					free(final_filename_output);
+					//free(final_filename_output);
+*/
+                  //  printf("172\n");
+
 				} else {
+                    //printf("181 this is to send the 400 error\n");
+
 					// Send an 400 Error if the file file is not in the directory
-			    	char* built_http_ok_response = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n'";
-				    int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
-                	if (send_200_ok == DOES_NOT_EXIST) {
-                    	fprintf(stderr, "Error in 200 sending in send 200 OK\n");
-                    	exit(1);
-                	}
+			    	//char* built_http_ok_response = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.\n'";
+				    //int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
+                	//int send_200_ok = send(connect_d, final_filename_output, strlen(final_filename_output), 0);
+                    printf("189\n");
+                    //if (send_200_ok == DOES_NOT_EXIST) {
+                    //	fprintf(stderr, "Error in 200 sending in send 200 OK\n");
+                    //	exit(1);
+                	//}
+
 				}
 
             } else {
-/*
+
                 // Returns the HTTP/1.1 400 Error Message
-                char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 400 ERROR.'";
+                //char* result_str = "HI";
+                //printf("200\n");
+                char* result_str = "HTTP/1.1 400 Bad Request\nContent-Type: text/plain\nContent-Length: 20\n\nThis is a 888 ERROR.'";
                 int send_400_error_code = send(connect_d, result_str, strlen(result_str), 0);
                 if (send_400_error_code == DOES_NOT_EXIST) {
+                    printf("204\n");
                     fprintf(stderr, "Error in sending\n");
                     exit(1);
                 }
-*/
-            }
 
+            }
             // Close the connection
-			printf("Closing the connection now!\n");
-            close(connect_ear
-);
+            printf("Closing the connection now!\n");
+            close(connect_d);
             exit(0);
         }
     }
-	close(listener_d);
+    close(listener_d);
 }
