@@ -25,12 +25,14 @@ void handle_shutdown(int sig) {
 
 // Run the server
 int main(int argc, char* argv[]) {
-    if (argc < 2) {    // argv[0]     argv[1]
-        printf("Usage: <program_name> <port>");
+    if (argc < 4) {    // argv[0]     argv[1] argv[2]                      argv[3]
+        printf("Usage: <program_name> <port> <absolute_path_of_media_file> <output_txt_file>");
         exit(1);
     }
 
     const char* port = argv[1];
+	char* bash_arg1 = argv[2];
+	char* bash_arg2 = argv[3];
     int port_num = atoi(port);
     char buf[BYTES_OF_DATA_100000];
 
@@ -154,18 +156,24 @@ int main(int argc, char* argv[]) {
             int upload_result = strcmp(upload_str, input_buf);
 
 			char* result;
-			char* final_filename_output = create_wav_filename();
+            char* arg1;
+            char* arg2;
+			char* final_filename_output;
 			char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
 
             if (summary_result == IS_TRUE){
                 printf("Run summary code.\n");
             } else if (transcribe_result == IS_TRUE) {
                 printf("Run transcribe code.\n");
+				char* retrieved_file_in_vid_dir_str = 0;
+				transcribe_video_method(connect_d, final_filename_output, retrieved_file_in_vid_dir_str);
+
             } else if (upload_result == IS_TRUE) {
                 printf("Run upload code.\n");
 
                 // Stream the data with connect_d
-                run_data_parser(connect_d, final_filename_output);
+                //run_data_parser(connect_d, final_filename_output);
+				create_wav_filename(bash_arg1, bash_arg2);
 
             } else {
                 // Send an 400 Error if the file is not in the directory
