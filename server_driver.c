@@ -202,21 +202,21 @@ int main(int argc, char* argv[]) {
                 }
 
                 // Build the Data JSON string to send to the client
-                char* results;
+                char* transcription_result;
                 int len_of_data = strlen(transcription_data_str);
-                build_http_data_json_ok_response(connect_d, transcription_data_str, result, data_idx);
 
+                printf(">>>>\n\n208\n");
+                char* built_http_translation_response = build_http_data_json_ok_response(connect_d, transcription_result, transcription_data_str, len_of_data);
+                printf(">> 209 server_driver.c >> %s\n\n", built_http_translation_response);
 
-                char* built_http_200_ok_response = "HTTP/1.1 200 OK\nContent-Type: video/mp4\nContent-Length: 20\n\nThis is a ZZZ ERROR.\n";
-                int send_200_ok = send(connect_d, built_http_200_ok_response, strlen(built_http_200_ok_response), 0);
+////char* built_http_translation_response = "HTTP/1.1 200 OK\nContent-Type: video/mp4\nContent-Length: 20\n\nThis is a ZZZ ERROR.\n";
+                int send_200_ok = send(connect_d, built_http_translation_response, strlen(built_http_translation_response), 0);
 		        if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending in send 200 OK\n");
                     close(connect_d);
                     exit(0);
                 }
-                printf("228 Here is the data_idx: %i\n", data_idx);
-                printf("6\n");
-
+                printf(">> 219 server_driver.c\n\n");
 			} else if (summary_result == IS_TRUE) {
 				printf("Run summary code.\n");
 
