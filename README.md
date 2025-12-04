@@ -9,17 +9,17 @@ ________________________________________________
 
 ## How to REQUEST Data
 
-### Upload Media File
+### 1. Upload Media File
 The first step is for the client to upload a media file using the POST request.
 
 HTTP Method: POST
-
 URL: http://localhost:8001/api/upload
-
 Required Header: Accept: video/mp4  
 Example Request (cURL):
 
+```
 curl -X POST -H 'Content-Type: video/mp4' -F "bob=@/home/ango/Downloads/Dream.mp4" http://localhost:1234/api/upload
+```
 
 ___________________________________________________
 
@@ -30,7 +30,7 @@ Expected Successful JSON Response (HTTP 200):
 Sent from Server to Client:
 {"Filename" : "123-UNIX-TIME.wav"}
 
-For Transcription Part:
+For Transcription:
 {"data" : "transcription summarized notes"}
 
 ____________________________________________________
@@ -63,15 +63,17 @@ We first have to demultiplex the media input file to a slower rate.
 gcc demux_decode.c -I /usr/include/ffmpeg -lavcodec -lavutil -lavformat -o demux_decode
 ./demux_decode your_input.wav z-audio  
 ```
-^ The Dream.mp4 above works that is in the same file directory. 
 
-2. Play the z-audio file to ensure it works
+2. Play the z-audio file to ensure that there is an output with a black screen.
 ```
 ffplay -f f32le -ar 44100 z-audio
 ```
+
 3. Convert the audio file to a .wav file.
-Have the wav file follow the command required by Whisper. The purpose is to slow down the
-rate of sound.
+
+The wav file is required to follow the command structure required by Whisper. 
+The purpose is to slow down the rate of sound.
+We then have to go to the directory where Whisper is installed to run it.
 ```
 ffmpeg -f f32le 16000 -ac 2 -i your_input.wav z-audio-output.wav
 ```
@@ -89,19 +91,20 @@ Follow these Whisper.cpp instructions: https://github.com/ggml-org/whisper.cpp?t
     - install cmake. Since I am using Fedora, use sudo dnf install cmake
   
 ```
-./build/bin/whisper-cli -f $HOME/Downloads/MLKDream.wav
+// 1. Be in the whisper.cpp directory
 
-// Another example to output a transcription file using .txt:
-/home/Riley_Lee/Code/whisper.cpp/build/bin/whisper-cli /home/Riley_Lee/whisper.cpp/models/ggml-medium.en.bin -f path_of_wav_file(this is the z-audio-output.wav) > time_stamp.txt
+$HOME/build/bin/whisper-cli -f $HOME/Downloads/MLKDream.wav > $HOME/unix_time_stamp.txt
+
+// Example of transcription file using .txt:
+/home/Riley_Lee/Code/RunSpeechToTextTool/whisper.cpp/build/bin/whisper-cli  /home/Riley_Lee/Code/RunSpeechToTextTool/whisper.cpp/models/ggml-medium.en.bin -f /home/Riley_Lee/Code/RunSpeechToTextTool/videos/1764773742.wav > absolute_path/time_stamp.txt
+
 ```
-1. Have the client sent the correct path of the .mp4 file to be transcribed. I might not need to use the
-arguments in ./demux_decode, but try it out
+1. Have the client sent the correct path of the .mp4 file to be transcribed.
 ```
 ffmpeg -f f32le 16000 -ac 2 -i your_input.wav z-audio-output.wav
 ```
 2. First access the z-audio-output.wav to be transcribed! 
 3. The z-audio-output.wav file should be created in the /videos directory
-
 ```
 ./build/bin/whisper-cli -f ./models/ggml-medium.en.bin -f ../z-audio-output.wav
 ```
@@ -109,7 +112,6 @@ ffmpeg -f f32le 16000 -ac 2 -i your_input.wav z-audio-output.wav
 ## 3. Minimal Multipart Form Data Parser-c
 - https://github.com/mofosyne/minimal-multipart-form-data-parser-c
 - git clone the library and compile the library locally
-
 
 _____________________________________________________
 # Transcribe
@@ -120,8 +122,7 @@ The server sends the transcribed data back to the client.
 
 How client requests a file to be transcribed:
 The client sends the following to the server of the requested filename:
-```curl -X POST -H 'Content-Type: video/mp4' -F "bob=@/home/ango/Downloads/Dream.mp4" http://localhost:1234/api/transcribe 
-    <your_path_to_the_filename>
+```curl -X POST -H 'Content-Type: video/mp4' -F "bob=@/home/ango/Downloads/Dream.mp4" http://localhost:1234/api/transcribe > your_path_to_the_filename
 ```
 
 Input: JSON string

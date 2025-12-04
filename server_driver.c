@@ -26,7 +26,7 @@ void handle_shutdown(int sig) {
 // Run the server
 int main(int argc, char* argv[]) {
     if (argc < 4) {    // argv[0]     argv[1] argv[2]                      argv[3]
-        printf("Usage: <program_name> <port> <absolute_path_of_media_file> <output_txt_file>");
+        printf("Usage: <program_name> <port> <absolute_path_of_media_file> <output_txt_filename>");
         exit(1);
     }
 
@@ -142,6 +142,7 @@ int main(int argc, char* argv[]) {
                 api_buffer_idx++;
                 first_idx++;
             }
+
             // Post has already been handled
             // Check which resource to use and run script
             char* summarize_str = "/api/summarize";
@@ -159,21 +160,61 @@ int main(int argc, char* argv[]) {
             char* arg1;
             char* arg2;
 			char* final_filename_output;
-			char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
 
-            if (summary_result == IS_TRUE){
-                printf("Run summary code.\n");
-            } else if (transcribe_result == IS_TRUE) {
-                printf("Run transcribe code.\n");
-				char* retrieved_file_in_vid_dir_str = 0;
-				transcribe_video_method(connect_d, final_filename_output, retrieved_file_in_vid_dir_str);
+			printf("Summarize_str: %s\n", summarize_str);
+			printf("Transcribe_str: %s\n", transcribe_str);
+			printf("Upload_str: %s\n", upload_str);
+			printf("Summarize_result: %i\n", summary_result);
+			printf("Transcribe_result: %i\n", transcribe_result);
+			printf("Upload_result: %i\n", upload_result);
 
-            } else if (upload_result == IS_TRUE) {
-                printf("Run upload code.\n");
+			//char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
+            if (upload_result == IS_TRUE) {
+
+			    printf("Run upload code.\n");
+
+				// Create the wav file in the video directory
+				final_filename_output = create_wav_filename(bash_arg1, bash_arg2);
 
                 // Stream the data with connect_d
-                //run_data_parser(connect_d, final_filename_output);
-				create_wav_filename(bash_arg1, bash_arg2);
+                run_data_parser(connect_d, final_filename_output);
+            } else if (transcribe_result == IS_TRUE) {
+                printf("Run transcribe code.\n");
+
+                FILE* fptr;
+                char ch;
+                char* data = (char*)malloc(100000);
+                int data_idx = 0;
+
+                fptr = fopen("transcriptions/17.txt", "r");
+                if (fptr == NULL) {
+                    printf("File does not exist or cannot be opened.\n");
+                    return 1;
+                } else {
+                    printf("Opening the file\n");
+                     while((ch = fgetc(fptr)) != EOF) {
+                         putchar(ch);
+                         *(data + data_idx) = ch;
+                         data_idx++;
+                    }
+                    //printf("Data: %s\n", data);
+                    fclose(fptr);
+                }
+                // Then send the built buffer back to the client
+                char* data_str = malloc(500000);
+                strcat(data_str, data);
+
+                //printf("This is the data str: %s\n", data_str);
+                char* built_http_200_ok_response = "HTTP/1.1 200 OK\nContent-Type: video/mp4\nContent-Length: 17\n\nThis is a 20fdfs OK.\n";
+                int send_200_ok = send(connect_d, built_http_200_ok_response, strlen(built_http_200_ok_response), 0);
+		        if (send_200_ok == DOES_NOT_EXIST) {
+                    fprintf(stderr, "Error in 200 sending in send 200 OK\n");
+                    close(connect_d);
+                    exit(0);
+                }
+
+			} else if (summary_result == IS_TRUE) {
+				printf("Run summary code.\n");
 
             } else {
                 // Send an 400 Error if the file is not in the directory
@@ -184,6 +225,7 @@ int main(int argc, char* argv[]) {
                 exit(0);
             }
             // Send a 200 message
+			char* built_http_ok_response = build_http_ok_response(final_filename_output, result);
             char* built_http_200_response = "HTTP/1.1 200 OK\nContent-Type: video/mp4\nContent-Length: 17\n\nThis is a 200 OK.\n";
             int send_200_ok = send(connect_d, built_http_ok_response, strlen(built_http_ok_response), 0);
 		    if (send_200_ok == DOES_NOT_EXIST) {

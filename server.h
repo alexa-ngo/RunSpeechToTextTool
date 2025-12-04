@@ -37,6 +37,7 @@
 char* api_transcribe_get_value(int connect_d, char* retrieved_file_in_vid_dir_str);
 void bind_to_port(int socket, int port);
 char* build_http_ok_response(char* final_filename_output, char* results);
+char* built_http_data_json_ok_response(char* transcription_str, char* results);
 int catch_signal(int sig, void (*handle)(int));
 char* create_UNIX_brace_filename(char* bash_arg1, char* bash_arg2);
 int is_post(int connect_d, char* api_buffer);
