@@ -183,9 +183,10 @@ int main(int argc, char* argv[]) {
 
                 FILE* fptr;
                 char ch;
-                char* data = (char*)malloc(100000);
+                char* transcription_data_str = (char*)malloc(100000);
                 int data_idx = 0;
 
+                printf("1\n");
                 fptr = fopen("transcriptions/17.txt", "r");
                 if (fptr == NULL) {
                     printf("File does not exist or cannot be opened.\n");
@@ -194,24 +195,27 @@ int main(int argc, char* argv[]) {
                     printf("Opening the file\n");
                      while((ch = fgetc(fptr)) != EOF) {
                          putchar(ch);
-                         *(data + data_idx) = ch;
+                         *(transcription_data_str + data_idx) = ch;
                          data_idx++;
                     }
-                    //printf("Data: %s\n", data);
                     fclose(fptr);
                 }
-                // Then send the built buffer back to the client
-                char* data_str = malloc(500000);
-                strcat(data_str, data);
 
-                //printf("This is the data str: %s\n", data_str);
-                char* built_http_200_ok_response = "HTTP/1.1 200 OK\nContent-Type: video/mp4\nContent-Length: 17\n\nThis is a 20fdfs OK.\n";
+                // Build the Data JSON string to send to the client
+                char* results;
+                int len_of_data = strlen(transcription_data_str);
+                build_http_data_json_ok_response(connect_d, transcription_data_str, result, data_idx);
+
+
+                char* built_http_200_ok_response = "HTTP/1.1 200 OK\nContent-Type: video/mp4\nContent-Length: 20\n\nThis is a ZZZ ERROR.\n";
                 int send_200_ok = send(connect_d, built_http_200_ok_response, strlen(built_http_200_ok_response), 0);
 		        if (send_200_ok == DOES_NOT_EXIST) {
                     fprintf(stderr, "Error in 200 sending in send 200 OK\n");
                     close(connect_d);
                     exit(0);
                 }
+                printf("228 Here is the data_idx: %i\n", data_idx);
+                printf("6\n");
 
 			} else if (summary_result == IS_TRUE) {
 				printf("Run summary code.\n");
